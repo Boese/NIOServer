@@ -1,12 +1,17 @@
 package com.nio.pinochleserver.pinochledriver;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
 
 import naga.NIOService;
 import naga.NIOSocket;
 
-import com.nio.pinochleserver.statemachine.GameStateMachine;
+import com.nio.pinochleserver.Player;
+import com.nio.pinochleserver.statemachine.Game;
+import com.nio.pinochleserver.statemachine.card.Card;
+import com.nio.pinochleserver.statemachine.card.Face;
+import com.nio.pinochleserver.statemachine.card.Suit;
 
 public class PinochleDriver {
 	
@@ -14,12 +19,12 @@ public class PinochleDriver {
 	//Execute in order
 	//Loop until checkForWinner returns true
 	//
-	 GameStateMachine p;
+	 Game p;
 	 
 	 
 	 public PinochleDriver() throws Exception {
 		// Start up the service.
-		 p = new GameStateMachine();
+		 p = new Game();
          NIOService service = new NIOService();
 
          // Open our socket.
@@ -32,11 +37,18 @@ public class PinochleDriver {
 	
 	public void startGame() {
 		Scanner s = new Scanner(System.in);
-		String winner = "";
-		while(winner != "quit") {
+		String quit = "";
+		while(quit != "y") {
 			p.deal();
-			System.out.println(p.getCurrentTurn() + " : ");
-			s.nextLine();
+			System.out.println(p.getCurrentTurn() + " ,enter Face :");
+			String face = s.nextLine();
+			System.out.println(p.getCurrentTurn() + " ,enter Suit :");
+			String suit = s.nextLine();
+			Card c = new Card(Suit.valueOf(suit),Face.valueOf(face));
+			Player player = p.getPlayer(p.getCurrentTurn());
+			p.playCard(player, c);
+			System.out.println("Quit? (y,n)");
+			quit = s.nextLine();
 		}
 	}
 	

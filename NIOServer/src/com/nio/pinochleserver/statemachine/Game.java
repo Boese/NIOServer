@@ -19,7 +19,7 @@ import com.nio.pinochleserver.statemachine.states.PlayState;
  * Implements State Pattern
  * author: Chris Boese
  */
-public class GameStateMachine {
+public class Game {
 	
 	//** CONSTANTS **
 	private static final int numberOfCards = 48;
@@ -42,11 +42,13 @@ public class GameStateMachine {
 	private int currentBid;
 	private Position currentTurn; //enum position
 	private Suit currentTrump; //enum Suit
-	
+	private int bidCounter;
+	private Position highestBidder;
+
 	PinochleGameState currentState = PlayState;
 	
 	//** Constructor
-	public GameStateMachine() {
+	public Game() {
 		this.players = new ArrayList<Player>(4);
 		this.team1Score = 0;
 		this.team2Score = 0;
@@ -55,6 +57,7 @@ public class GameStateMachine {
 		this.currentTrump = Suit.Hearts;
 		this.PlayState = new PlayState(this);
 		this.currentState = PlayState;
+		this.highestBidder = null;
 	}
 	
 	//** State Interface Methods
@@ -64,10 +67,13 @@ public class GameStateMachine {
 	public boolean checkForNines() {
 		return currentState.checkForNines();
 	}
+	public void startBid() {
+		currentState.startBid();
+	}
 	public void bid(Player from, int bid) {
 		currentState.bid(from, bid);
 	}
-	public Player whoWonBid() {
+	public Position whoWonBid() {
 		return currentState.whoWonBid();
 	}
 	public void passCards(Player from, Player to, List<Card> cards) {
@@ -91,6 +97,16 @@ public class GameStateMachine {
 	
 	
 	//** Helper Methods
+	public int getBidCounter() {
+		return bidCounter;
+	}
+	public void setBidCounter() {
+		bidCounter = 0;
+	}
+	public void decBidCounter() {
+		this.bidCounter--;
+	}
+	
 	public void addPlayer(NIOSocket socket) throws Exception {
 		List<Position> positions = asList(Position.North,Position.East,Position.West,Position.South);
 		Position position = positions.get(players.size());
@@ -143,6 +159,14 @@ public class GameStateMachine {
 		return this.currentBid;
 	}
 
+	public Position getHighestBidder() {
+		return highestBidder;
+	}
+
+	public void setHighestBidder(Position highestBidder) {
+		this.highestBidder = highestBidder;
+	}
+
 	public int getTeam1Score() {
 		return team1Score;
 	}
@@ -175,5 +199,12 @@ public class GameStateMachine {
 		this.currentTrump = currentTrump;
 	}
 	
-	
+	public Player getPlayer(Position position) {
+		Player tempPlayer = null;
+		for (Player player : players) {
+			if(player.getPosition() == position)
+				tempPlayer = player;
+		}
+		return tempPlayer;
+	}
 }
