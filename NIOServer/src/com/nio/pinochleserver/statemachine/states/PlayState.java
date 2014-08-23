@@ -12,11 +12,11 @@ import com.nio.pinochleserver.statemachine.card.Card;
 import com.nio.pinochleserver.statemachine.card.Face;
 import com.nio.pinochleserver.statemachine.card.Suit;
 
-public class Play implements PinochleGameState {
+public class PlayState implements PinochleGameState {
 
 	private GameStateMachine gamestatemachine;
 	
-	Play(GameStateMachine gamestatemachine) {
+	public PlayState(GameStateMachine gamestatemachine) {
 		this.gamestatemachine=gamestatemachine;
 	}
 	@Override
@@ -93,7 +93,7 @@ public class Play implements PinochleGameState {
 	@Override
 	public boolean playCard(Player from, Card c) {
 		System.out.println("Player : " + from.getPosition() + " Card : " + c.toString());
-		return false;
+		return true;
 	}
 
 	@Override

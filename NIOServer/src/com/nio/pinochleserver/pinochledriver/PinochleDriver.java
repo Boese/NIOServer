@@ -1,13 +1,44 @@
 package com.nio.pinochleserver.pinochledriver;
 
+import java.io.IOException;
+import java.util.Scanner;
+
+import naga.NIOService;
+import naga.NIOSocket;
+
+import com.nio.pinochleserver.statemachine.GameStateMachine;
+
 public class PinochleDriver {
 	
+	public boolean winner = false;
 	//Execute in order
 	//Loop until checkForWinner returns true
 	//
-	// PinochleGameStateMachine p = new PinochleGameStateMachine
-	// PinochleDriver()
+	 GameStateMachine p;
+	 
+	 
+	 public PinochleDriver() throws Exception {
+		// Start up the service.
+		 p = new GameStateMachine();
+         NIOService service = new NIOService();
+
+         // Open our socket.
+         NIOSocket socket = service.openSocket("localhost", 5218);
+         p.addPlayer(socket);
+         p.addPlayer(socket);
+         p.addPlayer(socket);
+         p.addPlayer(socket);
+	 }
 	
+	public void startGame() {
+		Scanner s = new Scanner(System.in);
+		String winner = "";
+		while(winner != "quit") {
+			p.deal();
+			System.out.println(p.getCurrentTurn() + " : ");
+			s.nextLine();
+		}
+	}
 	
 	/*
 	 * PREROUND:

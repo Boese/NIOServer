@@ -1,13 +1,18 @@
 package com.nio.pinochleserver.statemachine;
 
+import static java.util.Arrays.asList;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import naga.NIOSocket;
 
 import com.nio.pinochleserver.Player;
 import com.nio.pinochleserver.statemachine.card.Card;
 import com.nio.pinochleserver.statemachine.card.Position;
 import com.nio.pinochleserver.statemachine.card.Suit;
 import com.nio.pinochleserver.statemachine.states.PinochleGameState;
+import com.nio.pinochleserver.statemachine.states.PlayState;
 
 //StateMachine for Pinochle Game
 /*
@@ -26,10 +31,9 @@ public class GameStateMachine {
 	//***************	
 	
 	//** States
-	private PinochleGameState Start;	// Less than 4 players
-	private PinochleGameState PreRound; //Bidding, passing, melding
-	private PinochleGameState Round; // playing hand, Check for winner
-	private PinochleGameState GameOver; //Winner determined
+	private PinochleGameState StartState;	// Less than 4 players
+	private PinochleGameState PlayState;
+	private PinochleGameState GameOverState; //Winner determined
 	
 	//** Class Variables
 	private List<Player> players;
@@ -39,7 +43,7 @@ public class GameStateMachine {
 	private Position currentTurn; //enum position
 	private Suit currentTrump; //enum Suit
 	
-	PinochleGameState currentState = Start;
+	PinochleGameState currentState = PlayState;
 	
 	//** Constructor
 	public GameStateMachine() {
@@ -49,6 +53,8 @@ public class GameStateMachine {
 		this.currentBid = 0;
 		this.currentTurn = Position.North;
 		this.currentTrump = Suit.Hearts;
+		this.PlayState = new PlayState(this);
+		this.currentState = PlayState;
 	}
 	
 	//** State Interface Methods
@@ -85,7 +91,13 @@ public class GameStateMachine {
 	
 	
 	//** Helper Methods
-	public void addPlayer(Player p) throws Exception {
+	public void addPlayer(NIOSocket socket) throws Exception {
+		List<Position> positions = asList(Position.North,Position.East,Position.West,Position.South);
+		Position position = positions.get(players.size());
+		int teamNum = 1;
+		if(position.equals(Position.East) || position.equals(Position.West))
+			teamNum = 2;
+		Player p = new Player(position,teamNum,socket);
 		if(this.players.size() <= 3)
 			this.players.add(p);
 		else
