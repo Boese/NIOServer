@@ -58,8 +58,8 @@ public class GameStateMachine {
 	public boolean checkForNines() {
 		return currentState.checkForNines();
 	}
-	public void bid(Player player, int bid) {
-		currentState.bid(player, bid);
+	public void bid(Player from, int bid) {
+		currentState.bid(from, bid);
 	}
 	public Player whoWonBid() {
 		return currentState.whoWonBid();
@@ -122,5 +122,46 @@ public class GameStateMachine {
 	public List<Player> getPlayers() {
 		return this.players;
 	}
+	
+	public void setCurrentBid(int bid) {
+		this.currentBid = bid;
+	}
+	
+	public int getCurrentbid() {
+		return this.currentBid;
+	}
+
+	public int getTeam1Score() {
+		return team1Score;
+	}
+
+	public void setTeam1Score(int team1Score) {
+		this.team1Score = team1Score;
+	}
+
+	public int getTeam2Score() {
+		return team2Score;
+	}
+
+	public void setTeam2Score(int team2Score) {
+		this.team2Score = team2Score;
+	}
+
+	public Position getCurrentTurn() {
+		return currentTurn;
+	}
+
+	public void setCurrentTurn(Position currentTurn) {
+		this.currentTurn = currentTurn;
+	}
+
+	public Suit getCurrentTrump() {
+		return currentTrump;
+	}
+
+	public void setCurrentTrump(Suit currentTrump) {
+		this.currentTrump = currentTrump;
+	}
+	
 	
 }

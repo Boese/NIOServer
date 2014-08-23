@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.nio.pinochleserver.Player;
 import com.nio.pinochleserver.statemachine.card.Card;
+import com.nio.pinochleserver.statemachine.card.Position;
 import com.nio.pinochleserver.statemachine.card.Suit;
 
 public interface PinochleGameState {
@@ -12,7 +13,7 @@ public interface PinochleGameState {
 	 */ 		
 	public List<Card> deal();
 	public boolean checkForNines();
-	public void bid(Player player, int bid);
+	public void bid(Player from, int bid);
 	public Player whoWonBid();
 	public void passCards(Player from, Player to, List<Card> cards);
 	public int calculateMeld(Suit trump, List<Card> cards);

@@ -54,9 +54,8 @@ public class Play implements PinochleGameState {
 	}
 
 	@Override
-	public void bid(Player player, int bid) {
-		// TODO Auto-generated method stub
-		
+	public void bid(Player from, int bid) {
+		gamestatemachine.setCurrentBid(bid);
 	}
 
 	@Override
