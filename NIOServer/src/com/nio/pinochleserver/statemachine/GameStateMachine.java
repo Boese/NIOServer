@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.nio.pinochleserver.Player;
+import com.nio.pinochleserver.statemachine.card.Card;
 import com.nio.pinochleserver.statemachine.card.Position;
 import com.nio.pinochleserver.statemachine.card.Suit;
 import com.nio.pinochleserver.statemachine.states.PinochleGameState;
@@ -16,12 +17,12 @@ import com.nio.pinochleserver.statemachine.states.PinochleGameState;
 public class GameStateMachine {
 	
 	//** CONSTANTS **
-	protected static final int numberOfCards = 48;
-	protected static final int scoreToWin = 150;
-	protected static final boolean subtractScoreIfLose = true;
-	protected static final boolean trumpMarriageWorthDouble = true;
-	protected static final boolean winByTakingBidOnly = true;
-	protected static final boolean redeal5Nines = true;
+	private static final int numberOfCards = 48;
+	private static final int scoreToWin = 150;
+	private static final boolean subtractScoreIfLose = true;
+	private static final boolean trumpMarriageWorthDouble = true;
+	private static final boolean winByTakingBidOnly = true;
+	private static final boolean redeal5Nines = true;
 	//***************	
 	
 	//** States
@@ -31,17 +32,17 @@ public class GameStateMachine {
 	private PinochleGameState GameOver; //Winner determined
 	
 	//** Class Variables
-	protected List<Player> players;
-	protected int team1Score;
-	protected int team2Score;
-	protected int currentBid;
-	protected Position currentTurn; //enum position
-	protected Suit currentTrump; //enum Suit
+	private List<Player> players;
+	private int team1Score;
+	private int team2Score;
+	private int currentBid;
+	private Position currentTurn; //enum position
+	private Suit currentTrump; //enum Suit
 	
 	PinochleGameState currentState = Start;
 	
 	//** Constructor
-	GameStateMachine() {
+	public GameStateMachine() {
 		this.players = new ArrayList<Player>(4);
 		this.team1Score = 0;
 		this.team2Score = 0;
@@ -51,6 +52,36 @@ public class GameStateMachine {
 	}
 	
 	//** State Interface Methods
+	public List<Card> deal() {
+		return currentState.deal();
+	}
+	public boolean checkForNines() {
+		return currentState.checkForNines();
+	}
+	public void bid(Player player, int bid) {
+		currentState.bid(player, bid);
+	}
+	public Player whoWonBid() {
+		return currentState.whoWonBid();
+	}
+	public void passCards(Player from, Player to, List<Card> cards) {
+		currentState.passCards(from, to, cards);
+	}
+	public int calculateMeld(Suit trump, List<Card> cards) {
+		return currentState.calculateMeld(trump, cards);
+	}
+	public boolean possibleToMakeBid() {
+		return currentState.possibleToMakeBid();
+	}
+	public boolean playCard(Player from, Card c) {
+		return currentState.playCard(from, c);
+	}
+	public Player winHand() {
+		return currentState.winHand();
+	}
+	public boolean checkForWinner() {
+		return currentState.checkForWinner();
+	}
 	
 	
 	//** Helper Methods
@@ -86,6 +117,10 @@ public class GameStateMachine {
 	
 	public void setState(PinochleGameState state) {
 		this.currentState = state;
+	}
+	
+	public List<Player> getPlayers() {
+		return this.players;
 	}
 	
 }
