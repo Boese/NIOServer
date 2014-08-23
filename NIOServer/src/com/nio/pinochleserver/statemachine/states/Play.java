@@ -55,49 +55,60 @@ public class Play implements PinochleGameState {
 
 	@Override
 	public void bid(Player from, int bid) {
+		from.setBid(bid);
 		gamestatemachine.setCurrentBid(bid);
 	}
 
 	@Override
 	public Player whoWonBid() {
-		// TODO Auto-generated method stub
-		return null;
+		Player player = null;
+		for (Player p : gamestatemachine.getPlayers()) {
+			if(p.getBid() > player.getBid())
+				player = p;
+		}
+		return player;
 	}
 
 	@Override
 	public void passCards(Player from, Player to, List<Card> cards) {
-		// TODO Auto-generated method stub
-		
+		List<Card> tempCardsTo = to.getCurrentCards();
+		for (Card card : tempCardsTo) {
+			tempCardsTo.add(card);
+		}
+		to.setCards(cards);
 	}
 
 	@Override
 	public int calculateMeld(Suit trump, List<Card> cards) {
 		// TODO Auto-generated method stub
-		return 0;
+		return 10;
 	}
 
 	@Override
 	public boolean possibleToMakeBid() {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean playCard(Player from, Card c) {
-		// TODO Auto-generated method stub
+		System.out.println("Player : " + from.getPosition() + " Card : " + c.toString());
 		return false;
 	}
 
 	@Override
 	public Player winHand() {
-		// TODO Auto-generated method stub
-		return null;
+		return gamestatemachine.getPlayers().get(0);
 	}
 
 	@Override
 	public boolean checkForWinner() {
-		// TODO Auto-generated method stub
-		return false;
+		boolean winner = false;
+		if(gamestatemachine.getTeam1Score() >= 150)
+			winner = true;
+		if(gamestatemachine.getTeam2Score() >= 150)
+			winner = true;
+		return winner;
 	}
 
 }

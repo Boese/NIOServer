@@ -14,6 +14,7 @@ public class Player {
 	private int team; //team 1 or team 2
 	private List<Card> currentCards; //current cards List<enum cards>
 	private int currentMeld; //current meld score for player
+	private int currentBid;
 	private NIOSocket socket;
 	
 	public Player(Position position, int team, NIOSocket socket) {
@@ -21,19 +22,32 @@ public class Player {
 		this.team = team;
 		this.currentCards = new ArrayList<Card>();
 		this.currentMeld = 0;
+		this.currentBid = 0;
 		this.socket = socket;
 	}
 	
-	public void updateMeld(int meld) {
-		this.currentMeld = meld;
-	}
-	
-	public void updateCards(List<Card> newCards) {
-		this.currentCards = newCards;
+	public void setSocket(NIOSocket socket) {
+		this.socket = socket;
 	}
 	
 	public NIOSocket getSocket() {
 		return this.socket;
+	}
+	
+	public void setBid(int bid) {
+		this.currentBid = bid;
+	}
+	
+	public int getBid() {
+		return this.currentBid;
+	}
+	
+	public void setMeld(int meld) {
+		this.currentMeld = meld;
+	}
+	
+	public void setCards(List<Card> newCards) {
+		this.currentCards = newCards;
 	}
 	
 	public int getCurrentMeld() {
