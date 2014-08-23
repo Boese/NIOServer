@@ -51,21 +51,7 @@ public class GameStateMachine {
 	}
 	
 	//** State Interface Methods
-	public void StartGame() {
-		this.currentState.StartGame();
-	}
-	public void StartBidding() {
-		this.currentState.StartBidding();
-	}
-	public void PassCards() {
-		this.currentState.PassCards();
-	}
-	public void StartRound() {
-		this.currentState.StartRound();
-	}
-	public void CheckForWinner() {
-		this.currentState.CheckForWinner();
-	}
+	
 	
 	//** Helper Methods
 	public void addPlayer(Player p) throws Exception {
