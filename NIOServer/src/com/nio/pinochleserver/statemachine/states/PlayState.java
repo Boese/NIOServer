@@ -21,27 +21,32 @@ public class PlayState implements PinochleGameState {
 		this.game=gamestatemachine;
 	}
 	@Override
-	public List<Card> deal() {
+	public void deal() {
 		final List<Suit> suits = asList(Suit.Hearts,Suit.Diamonds,Suit.Spades,Suit.Hearts);
 		final List<Face> faces = asList(Face.Nine,Face.Jack,Face.Queen,Face.King,Face.Ten,Face.Ace);
 		
 		List<Card> deck = new ArrayList<Card>(48);
 		
-		for (int i = 0; i < 2; i++) {
-			for (Suit suit : suits) {
-				for (Face face : faces) {
+		// Fill new Pinochle deck
+		for (int i = 0; i < 2; i++) {	// 2 of each card *
+			for (Suit suit : suits) {	// 4 of each suit *
+				for (Face face : faces) {	// 6 of each face = 48 cards
 					deck.add(new Card(suit,face));
 				}
 			}
 		}
+		
+		// Shuffle deck
 		Collections.shuffle(deck);
 		
-		int i = 1;
-		for (Card card : deck) {
-			System.out.println(i + " " + card);
-			i++;
+		// Deal out 12 cards to each player
+		int from = 0;
+		int to = 11;
+		for (Player player : game.getPlayers()) {
+			player.setCards(deck.subList(from, to));
+			from += 12;
+			to += 12;
 		}
-		return deck;
 	}
 
 	@Override

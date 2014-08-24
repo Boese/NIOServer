@@ -11,7 +11,7 @@ public interface PinochleGameState {
 	/*
 	 * PREROUND:
 	 */ 		
-	public List<Card> deal();
+	public void deal();
 	public boolean checkForNines();
 	public void startBid();
 	public int bid(Player from, int bid);

@@ -61,8 +61,8 @@ public class Game {
 	}
 	
 	//** State Interface Methods
-	public List<Card> deal() {
-		return currentState.deal();
+	public void deal() {
+		currentState.deal();
 	}
 	public boolean checkForNines() {
 		return currentState.checkForNines();
