@@ -1,21 +1,20 @@
-package com.nio.pinochleserver.statemachine.states;
+package com.nio.pinochleserver.pinochlegames;
 
 import java.util.List;
 
-import com.nio.pinochleserver.Player;
-import com.nio.pinochleserver.statemachine.card.Card;
-import com.nio.pinochleserver.statemachine.card.Position;
-import com.nio.pinochleserver.statemachine.card.Suit;
+import com.nio.pinochleserver.enums.Card;
+import com.nio.pinochleserver.enums.Position;
+import com.nio.pinochleserver.enums.Suit;
+import com.nio.pinochleserver.player.Player;
 
-public interface PinochleGameState {
+public interface PinochleGame {
 	/*
 	 * PREROUND:
 	 */ 		
 	public void deal();
 	public boolean checkForNines();
-	public void startBid();
-	public int bid(Player from, int bid);
-	public Position whoWonBid();
+	public Position startBid();
+	public boolean bid(int bid);
 	public void passCards(Player from, Player to, List<Card> cards);
 	public int calculateMeld(Suit trump, List<Card> cards);
 	public boolean possibleToMakeBid();

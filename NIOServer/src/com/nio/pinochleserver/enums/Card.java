@@ -1,4 +1,4 @@
-package com.nio.pinochleserver.statemachine.card;
+package com.nio.pinochleserver.enums;
 
 public class Card {
 	public Suit suit;

@@ -1,11 +1,11 @@
-package com.nio.pinochleserver;
+package com.nio.pinochleserver.player;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.nio.pinochleserver.statemachine.card.Card;
-import com.nio.pinochleserver.statemachine.card.Face;
-import com.nio.pinochleserver.statemachine.card.Position;
+import com.nio.pinochleserver.enums.Card;
+import com.nio.pinochleserver.enums.Face;
+import com.nio.pinochleserver.enums.Position;
 
 import naga.NIOSocket;
 
@@ -24,6 +24,19 @@ public class Player {
 		this.currentMeld = 0;
 		this.currentBid = 0;
 		this.socket = socket;
+	}
+	
+	public String toString() {
+		String player = "";
+		player += "Position : " + position + "\n";
+		player += "Team : " + team + "\n";
+		player += "Cards : ";
+		for (Card card : currentCards) {
+			player += card + " , ";
+		}
+		player += "\n";
+		player += "Socket : " + socket + "\n";
+		return player;
 	}
 	
 	public void setSocket(NIOSocket socket) {

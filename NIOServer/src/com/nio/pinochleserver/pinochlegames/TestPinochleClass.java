@@ -1,4 +1,4 @@
-package com.nio.pinochleserver.statemachine.states;
+package com.nio.pinochleserver.pinochlegames;
 
 import com.nio.pinochleserver.pinochledriver.PinochleDriver;
 
@@ -8,5 +8,4 @@ public class TestPinochleClass {
 		PinochleDriver p = new PinochleDriver();
 		p.startGame();
 	}
-
 }
