@@ -11,6 +11,7 @@ import naga.NIOSocket;
 
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.Face;
+import com.nio.pinochleserver.enums.GameState;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.pinochlegames.PinochleGame;
@@ -43,6 +44,7 @@ public class FourHandedPinochle implements PinochleGame {
 	private Position bidTurn; // keeps track of who starts bidding round
 	private List<Position> bidders;
 	private ListIterator<Position> biddersIterator;
+	private GameState currentState;
 	
 	//** Constructor
 	public FourHandedPinochle() {
@@ -53,9 +55,66 @@ public class FourHandedPinochle implements PinochleGame {
 		currentTurn = Position.North;
 		highestBidder = null;
 		bidTurn = Position.North;
+		currentState = GameState.Start;
 	}
 
 	//** Pinochle Game Implementation
+	@Override 
+	public String play(String move) {
+		String need = null;
+		switch(currentState) {
+		case Bid:
+			int newBid = Integer.parseInt(move);
+			boolean result = bid(newBid);
+			if(result && highestBidder != null) {
+				currentState = GameState.Pass;
+				need = "pass cards (Press Enter)";
+			}
+			else if(result && highestBidder == null) {
+				currentState = GameState.Deal;
+				need = "everyone passed, redeal (Press Enter)";
+			}
+			else
+				need = currentTurn + "Socket: " + getCurrentSocket() + " bid :";
+			break;
+		case Deal:
+			deal();
+			System.out.println("CurrentTurn : " + currentTurn + "Socket: " + getCurrentSocket());
+			System.out.println(getPlayer(currentTurn));
+			if(!checkForNines()) {
+				need = currentTurn + "Socket: " + getCurrentSocket() + " bid :";
+				currentState = GameState.Bid;
+				startBid();
+			}
+			else
+				need = "A player receieved 5 Nines! redeal (Press Enter)";
+			break;
+		case GameOver:
+			break;
+		case Pass:
+			System.out.println("Winning Bidder = " + highestBidder  + "Socket: " + getCurrentSocket());
+			System.out.println("Bid : " + currentBid);
+			System.out.println("Team that won bid : " + getPlayer(currentTurn).getTeam());
+			System.out.println("Pass 4 cards to Teammate " + getTeamMate(currentTurn) + ", Player " + currentTurn);
+			need = "gameOver";
+			break;
+		case Play:
+			break;
+		case Start:
+			if(players.size() != 4)
+				break;
+			else {
+				currentState=GameState.Deal;
+				need = "deal cards (Press Enter)";
+			}
+			break;
+		default:
+			break;
+		
+		}
+		return need;
+	}
+	
 	@Override
 	public void deal() {
 		final List<Suit> suits = asList(Suit.Hearts,Suit.Diamonds,Suit.Spades,Suit.Hearts);
@@ -258,6 +317,10 @@ public class FourHandedPinochle implements PinochleGame {
 
 	public Position getCurrentTurn() {
 		return currentTurn;
+	}
+	
+	public NIOSocket getCurrentSocket() {
+		return getPlayer(currentTurn).getSocket();
 	}
 	
 	public Position getTeamMate(Position p) {
