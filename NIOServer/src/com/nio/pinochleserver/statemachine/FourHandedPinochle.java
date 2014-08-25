@@ -111,9 +111,9 @@ public class FourHandedPinochle implements PinochleGame {
 	@Override
 	public boolean bid(int bid) {
 		
-		Position currentPosition = (Position) biddersIterator.next();
+		Position currentPosition = biddersIterator.next();
 		
-		// bidder passed
+		// bidder passed remove bidder
 		if(bid == 0) {
 			biddersIterator.remove();
 		}
@@ -123,7 +123,7 @@ public class FourHandedPinochle implements PinochleGame {
 			getPlayer(currentPosition).setBid(bid);
 			highestBidder = currentPosition;
 		}
-		// bid not high enough
+		// bid not high enough prompt again
 		else {
 			System.out.println("must enter bid higher than " + currentBid);
 			currentTurn = biddersIterator.previous();
@@ -213,15 +213,18 @@ public class FourHandedPinochle implements PinochleGame {
 			throw new Exception("FourHandedPinochle Full");
 	}
 	
-	public void removePlayer(Player p) throws Exception {
+	public boolean removePlayer(NIOSocket socket) throws Exception {
+		boolean success = false;
 		if(this.players.size() > 0) {
-			if(this.players.contains(p))
-				this.players.remove(p);
-			else
-				throw new Exception("Player doesn't exist");
+			for (Player player : players) {
+				if(player.getSocket() == socket) {
+					success = true;
+					players.remove(player);
+					break;
+				}
+			}
 		}
-		else
-			throw new Exception("FourHandedPinochle is empty");
+		return success;
 	}
 	
 	public Player getPlayer(Position position) {

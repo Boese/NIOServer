@@ -1,5 +1,6 @@
 package com.nio.pinochleserver.pinochledriver;
 
+import java.util.List;
 import java.util.Scanner;
 
 import naga.NIOService;
@@ -9,11 +10,8 @@ import com.nio.pinochleserver.statemachine.FourHandedPinochle;
 
 public class PinochleDriver {
 	
-	public boolean winner = false;
-	//Execute in order
-	//Loop until checkForWinner returns true
-	//
-	 FourHandedPinochle p;
+	private List<NIOSocket> sockets;
+	private FourHandedPinochle p;
 	 
 	 
 	 public PinochleDriver() throws Exception {
@@ -28,12 +26,39 @@ public class PinochleDriver {
          p.addPlayer(socket);
          p.addPlayer(socket);
 	 }
+	 
+	 public boolean addSocket(NIOSocket socket) {
+		 boolean success = true;
+		 try {
+			p.addPlayer(socket);
+		} catch (Exception e) {
+			success = false;
+			e.printStackTrace();
+		}
+		 return success;
+	 }
+	 
+	 public boolean removeSocket(NIOSocket socket){
+		 boolean success = true;
+		 try {
+			p.removePlayer(socket);
+		} catch (Exception e) {
+			success = false;
+			e.printStackTrace();
+		}
+		 return success;
+	 }
+	 
+	 public boolean isFull() {
+		 if(sockets.size() == 4)
+			 return true;
+		 return false;
+	 }
 	
 	public void startGame() {
 		Scanner s = new Scanner(System.in);
 		String quit = "";
 			do {
-				
 					// deal and check for Nines
 					do {
 					p.deal();
