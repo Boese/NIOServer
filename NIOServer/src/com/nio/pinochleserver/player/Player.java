@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.nio.pinochleserver.enums.Card;
+import com.nio.pinochleserver.enums.CardComparator;
 import com.nio.pinochleserver.enums.Face;
 import com.nio.pinochleserver.enums.Position;
+import com.nio.pinochleserver.enums.Suit;
 
 import naga.NIOSocket;
 
@@ -37,6 +39,29 @@ public class Player {
 		player += "\n";
 		player += "Socket : " + socket + "\n";
 		return player;
+	}
+	
+	public String toCardString() {
+		currentCards.sort(new CardComparator());
+		String hearts = "Hearts : ";
+		String diamonds = "Diamonds : ";
+		String clubs = "Clubs : ";
+		String spades = "Spades : ";
+		for (Card card : currentCards) {
+			Suit s = card.suit;
+			switch(s) {
+			case Clubs: clubs += card + " ";
+				break;
+			case Diamonds: diamonds += card + " ";
+				break;
+			case Hearts: hearts += card + " ";
+				break;
+			case Spades: spades += card + " ";
+				break;
+			}
+		}
+		String returnCards = hearts + "\n" + clubs + "\n" + diamonds + "\n" + spades + "\n";
+		return returnCards;
 	}
 	
 	public void setSocket(NIOSocket socket) {

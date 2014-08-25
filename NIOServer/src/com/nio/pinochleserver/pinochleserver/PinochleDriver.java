@@ -1,4 +1,4 @@
-package com.nio.pinochleserver.pinochledriver;
+package com.nio.pinochleserver.pinochleserver;
 
 import java.util.Scanner;
 
@@ -6,7 +6,7 @@ import naga.NIOService;
 import naga.NIOSocket;
 
 import com.nio.pinochleserver.enums.GameResponse;
-import com.nio.pinochleserver.statemachine.FourHandedPinochle;
+import com.nio.pinochleserver.pinochlegames.FourHandedPinochle;
 
 public class PinochleDriver {
 	

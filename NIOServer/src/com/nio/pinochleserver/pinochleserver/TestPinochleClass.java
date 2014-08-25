@@ -1,6 +1,5 @@
-package com.nio.pinochleserver.pinochlegames;
+package com.nio.pinochleserver.pinochleserver;
 
-import com.nio.pinochleserver.pinochledriver.PinochleDriver;
 
 public class TestPinochleClass {
 

@@ -1,15 +1,11 @@
-package com.nio.pinochleserver.pinochledriver;
+package com.nio.pinochleserver.pinochleserver;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.Timer;
-
 import com.nio.pinochleserver.enums.GameResponse;
-import com.nio.pinochleserver.statemachine.FourHandedPinochle;
+import com.nio.pinochleserver.pinochlegames.FourHandedPinochle;
 
 import naga.ConnectionAcceptor;
 import naga.NIOServerSocket;
@@ -61,6 +57,7 @@ public class PinochleServer implements ServerSocketObserver{
 				game.addSocket(socket);
 				currentGames.add(game);
 				System.out.println("Created new Game");
+				System.out.println("# of currentGames : " + currentGames.size());
 			} catch (Exception e) {
 				e.printStackTrace();
 				return;
@@ -76,6 +73,8 @@ public class PinochleServer implements ServerSocketObserver{
 	
 	public void removeGame(Game g) {
 		currentGames.remove(g);
+		System.out.println("Removed Game");
+		System.out.println("# of currentGames : " + currentGames.size());
 	}
 	
 	public static void main(String[] args) {
@@ -84,6 +83,7 @@ public class PinochleServer implements ServerSocketObserver{
 		{
             EventMachine machine = new EventMachine();
 			NIOServerSocket socket = machine.getNIOService().openServerSocket(port);
+			System.out.println("***Pinochle Server Started!***");
 			socket.listen(new PinochleServer(machine));
 			socket.setConnectionAcceptor(ConnectionAcceptor.ALLOW);
             machine.start();
@@ -146,8 +146,11 @@ public class PinochleServer implements ServerSocketObserver{
 					break;
 				case Player:
 						currentSocket = p.getPlayer(p.getCurrentTurn()).getSocket();
-						//currentSocket.write(p.getCurrentResponse().getBytes());
 						scheduleInactivityEvent(currentSocket, p.getCurrentResponse());
+					break;
+				case Pause:	broadcastGame(p.getBroadcastResponse());
+					break;
+				default:
 					break;
 				}
 				
@@ -159,17 +162,22 @@ public class PinochleServer implements ServerSocketObserver{
 		
 		@Override
 		public void connectionBroken(NIOSocket socket, Exception arg1) {
-            broadcast("Waiting for players ... (" + sockets.size() + " players)");
-            broadcast("GAME IS PAUSED");
-            System.out.println("socket disconnected : " + socket);
             if(sockets.contains(socket))
             	sockets.remove(socket);
 			try {
 				p.removePlayer(socket);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
+			broadcast("Waiting for players ... (" + sockets.size() + " players)");
+            broadcast("GAME IS PAUSED");
+            System.out.println("socket disconnected : " + socket);
+            
+			if(sockets.size() == 0)
+				server.removeGame(this);
+			
+			disconnectEvent.cancel();
+			currentSocket = null;
+			Play();
 		}
 		
 		// When player replaces another handle it ***
@@ -178,8 +186,8 @@ public class PinochleServer implements ServerSocketObserver{
             System.out.println("new socket connected : " + socket);
             
             if(isFull()) {
+            	broadcast("Waiting for players ... (" + sockets.size() + " players)");
             	broadcast("GAME IS STARTING!");
-                broadcast("Waiting for players ... (" + sockets.size() + " players)");
             	boolean done = false;
             	do {
             		done = Play();
@@ -208,7 +216,7 @@ public class PinochleServer implements ServerSocketObserver{
 		@Override
 		public void packetReceived(NIOSocket socket, byte[] packet) {
 			if(currentSocket == socket) {
-				disconnectEvent.cancel();
+				disconnectEvent.cancel(); 
 				socketResponse = new String(packet);
 				currentSocket = null;
 				boolean done = false;
@@ -220,19 +228,9 @@ public class PinochleServer implements ServerSocketObserver{
 
 		@Override
 		public void packetSent(NIOSocket socket, Object arg1) {
-			// Check if game is Over and reset!
-			if(gameOver) {
-				server.getEventMachine().asyncExecute(new Runnable() {
-					@Override
-					public void run() {
-						for (NIOSocket s : sockets) {
-							s.closeAfterWrite();
-							p = new FourHandedPinochle();
-						}
-						sockets.clear();
-					}
-				});
-			}
+			// Check if game is over and close socket
+			if(gameOver) 
+				socket.closeAfterWrite();
 		}
 		
 		public boolean addSocket(NIOSocket socket) {

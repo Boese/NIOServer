@@ -1,4 +1,4 @@
-package com.nio.pinochleserver.statemachine;
+package com.nio.pinochleserver.pinochlegames;
 
 import static java.util.Arrays.asList;
 
@@ -15,7 +15,6 @@ import com.nio.pinochleserver.enums.GameResponse;
 import com.nio.pinochleserver.enums.GameState;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
-import com.nio.pinochleserver.pinochlegames.PinochleGame;
 import com.nio.pinochleserver.player.Player;
 
 //StateMachine for Pinochle FourHandedPinochle
@@ -74,8 +73,11 @@ public class FourHandedPinochle implements PinochleGame {
 	//** Pinochle Game Implementation
 	@Override 
 	public GameResponse play(String move) {
+		if(!gameFull())
+			currentState = GameState.Pause;
+		
 		GameResponse gameResponse = GameResponse.Broadcast;
-		broadcastResponse.clear();
+		broadcastResponse.clear();	//Clear out broadcast list
 		
 			switch(currentState) {
 			case Bid:
@@ -101,7 +103,7 @@ public class FourHandedPinochle implements PinochleGame {
 			case Deal:
 				deal();
 				for (Player player : players) {
-					broadcastResponse.add(player.getCurrentCards().toString());
+					broadcastResponse.add(player.toCardString());
 				}
 				currentState = GameState.CheckForNines;
 				break;
@@ -118,6 +120,12 @@ public class FourHandedPinochle implements PinochleGame {
 						broadcastResponse.add("5 Nines redeal");
 					}
 				}
+				break;
+			case Pause:currentState = GameState.Start;
+					for (Player player : players) {
+						broadcastResponse.add("Round is restarting because a player left");
+					}
+					gameResponse = GameResponse.Pause;
 				break;
 			case GameOver: 
 					playerResponse = "gameOver";
@@ -150,7 +158,7 @@ public class FourHandedPinochle implements PinochleGame {
 	
 	@Override
 	public void deal() {
-		final List<Suit> suits = asList(Suit.Hearts,Suit.Diamonds,Suit.Spades,Suit.Hearts);
+		final List<Suit> suits = asList(Suit.Hearts,Suit.Diamonds,Suit.Spades,Suit.Clubs);
 		final List<Face> faces = asList(Face.Nine,Face.Jack,Face.Queen,Face.King,Face.Ten,Face.Ace);
 		
 		List<Card> deck = new ArrayList<Card>(48);
@@ -292,9 +300,20 @@ public class FourHandedPinochle implements PinochleGame {
 		bidTurn = bidTurn.getNext(1);
 	}
 	
+	private Position findNextAvailablePosition() {
+		List<Position> availPositions = new ArrayList<Position>();
+		availPositions.add(Position.North);
+		availPositions.add(Position.East);
+		availPositions.add(Position.South);
+		availPositions.add(Position.West);
+		for (Player player : players) {
+			availPositions.remove(player.getPosition());
+		}
+		return availPositions.get(0);
+	}
+	
 	public void addPlayer(NIOSocket socket) throws Exception {
-		List<Position> positions = asList(Position.North,Position.East,Position.West,Position.South);
-		Position position = positions.get(players.size());
+		Position position = findNextAvailablePosition();
 		int teamNum = 1;
 		if(position.equals(Position.East) || position.equals(Position.West))
 			teamNum = 2;

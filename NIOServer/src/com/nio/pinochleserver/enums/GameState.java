@@ -7,6 +7,7 @@ public enum GameState {
 	Bid,
 	Pass,
 	Play,
+	Pause,
 	GameOver;
 	public GameState getNext(int i) {
 		return values()[(ordinal()+i) % values().length];
