@@ -1,9 +1,14 @@
 package com.nio.pinochleserver.pinochledriver;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Timer;
+
+import com.nio.pinochleserver.enums.GameResponse;
 import com.nio.pinochleserver.statemachine.FourHandedPinochle;
 
 import naga.ConnectionAcceptor;
@@ -20,6 +25,8 @@ public class PinochleServer implements ServerSocketObserver{
 
 	private static EventMachine m_eventMachine;
     private static List<Game> currentGames;
+    
+    //**implement Observer for Games (Observables), when they change state to gameOver, remove game
     
     PinochleServer(EventMachine machine) {
     	m_eventMachine = machine;
@@ -67,6 +74,10 @@ public class PinochleServer implements ServerSocketObserver{
 		System.exit(1);
 	}
 	
+	public void removeGame(Game g) {
+		currentGames.remove(g);
+	}
+	
 	public static void main(String[] args) {
 		int port = 5218;
 		try
@@ -90,66 +101,138 @@ public class PinochleServer implements ServerSocketObserver{
 	
 	private static class Game implements SocketObserver {
 
-		private final static long LOGIN_TIMEOUT = 30 * 1000;
-        //private final static long INACTIVITY_TIMEOUT = 5 * 60 * 100;
+		//private final static long LOGIN_TIMEOUT = 30 * 1000;
+        private final static int INACTIVITY_TIMEOUT = 5 * 60 * 100;
 		private List<NIOSocket> sockets;
 		private FourHandedPinochle p;
         private DelayedEvent disconnectEvent;
         private PinochleServer server;
+        private NIOSocket currentSocket;
+        private String socketResponse;
+        private boolean gameOver = false;
 		
 		private Game(PinochleServer server) {
 			p = new FourHandedPinochle();
 			this.sockets = new ArrayList<NIOSocket>();
 			this.server = server;
+			currentSocket = null;
+			socketResponse = "";
 		}
 		
-		private void broadcast(String message) {
+		private void broadcastGame(List<String> messages) {
+			int i = 0;
 			for (NIOSocket nioSocket : sockets) {
-				nioSocket.write(message.getBytes());
+				nioSocket.write(messages.get(i).getBytes());
+				i++;
 			}
 		}
+		private void broadcast(String messages) {
+			for (NIOSocket nioSocket : sockets) {
+				nioSocket.write(messages.getBytes());
+			}
+		}
+		
+		private boolean Play() {
+			//Broadcast until player response is needed
+				GameResponse g = p.play(socketResponse);
+				
+				if(p.getCurrentResponse() == "gameOver") {
+					gameOver = true;
+					return false;
+				}
+				
+				switch(g) {
+				case Broadcast: broadcastGame(p.getBroadcastResponse());
+					break;
+				case Player:
+						currentSocket = p.getPlayer(p.getCurrentTurn()).getSocket();
+						//currentSocket.write(p.getCurrentResponse().getBytes());
+						scheduleInactivityEvent(currentSocket, p.getCurrentResponse());
+					break;
+				}
+				
+				socketResponse = null;
+				if(g.equals(GameResponse.Broadcast))
+					return true;
+				return false;
+		}
+		
 		@Override
 		public void connectionBroken(NIOSocket socket, Exception arg1) {
-			removeSocket(socket);
-			String message = "Waiting for players ... (" + sockets.size() + " players)";
-            broadcast(message);
+            broadcast("Waiting for players ... (" + sockets.size() + " players)");
             broadcast("GAME IS PAUSED");
+            System.out.println("socket disconnected : " + socket);
+            if(sockets.contains(socket))
+            	sockets.remove(socket);
+			try {
+				p.removePlayer(socket);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-
+		
+		// When player replaces another handle it ***
 		@Override
 		public void connectionOpened(NIOSocket socket) {
-			// We start by scheduling a disconnect event for the login.
+            System.out.println("new socket connected : " + socket);
+            
+            if(isFull()) {
+            	broadcast("GAME IS STARTING!");
+                broadcast("Waiting for players ... (" + sockets.size() + " players)");
+            	boolean done = false;
+            	do {
+            		done = Play();
+            	}while(done);
+            }
+            else {
+            	broadcast("Waiting for players ... (" + sockets.size() + " players)");
+            }
+		}
+		
+		private void scheduleInactivityEvent(NIOSocket socket, String message)
+        {
+            // Cancel the last disconnect event, schedule another.
+            if (disconnectEvent != null) disconnectEvent.cancel();
             disconnectEvent = server.getEventMachine().executeLater(new Runnable()
             {
                 public void run()
                 {
-                	System.out.println("socket disconnected : " + socket);
-                    socket.write("Disconnecting due to inactivity".getBytes());
+                    socket.write("Disconnected due to inactivity.".getBytes());
                     socket.closeAfterWrite();
-                    removeSocket(socket);
                 }
-            }, LOGIN_TIMEOUT);
-
-            System.out.println("new socket connected : " + socket);
-            // Send the request to log in.
-            if(isFull())
-            	broadcast("GAME IS STARTING!");
-            else {
-            	String message = "Waiting for players ... (" + sockets.size() + " players)";
-                broadcast(message);
-            }
-            socket.write("Please enter your name:".getBytes());
-		}
+            }, INACTIVITY_TIMEOUT);
+            socket.write(message.getBytes());
+        }
 
 		@Override
-		public void packetReceived(NIOSocket socket, byte[] arg1) {
-			disconnectEvent.cancel();
+		public void packetReceived(NIOSocket socket, byte[] packet) {
+			if(currentSocket == socket) {
+				disconnectEvent.cancel();
+				socketResponse = new String(packet);
+				currentSocket = null;
+				boolean done = false;
+            	do {
+            		done = Play();
+            	}while(done);
+			}
 		}
 
 		@Override
 		public void packetSent(NIOSocket socket, Object arg1) {
-			// TODO Auto-generated method stub
-			
+			// Check if game is Over and reset!
+			if(gameOver) {
+				server.getEventMachine().asyncExecute(new Runnable() {
+					@Override
+					public void run() {
+						for (NIOSocket s : sockets) {
+							s.closeAfterWrite();
+							p = new FourHandedPinochle();
+						}
+						sockets.clear();
+					}
+				});
+			}
 		}
 		
 		public boolean addSocket(NIOSocket socket) {
@@ -160,19 +243,6 @@ public class PinochleServer implements ServerSocketObserver{
 				socket.setPacketReader(new AsciiLinePacketReader());
 	            socket.setPacketWriter(new AsciiLinePacketWriter());
 				socket.listen(this);
-			} catch (Exception e) {
-				success = false;
-				e.printStackTrace();
-			}
-			 return success;
-		 }
-		 
-		 public boolean removeSocket(NIOSocket socket){
-			 boolean success = true;
-			 try {
-				sockets.remove(socket);
-				p.removePlayer(socket);
-				socket.close();
 			} catch (Exception e) {
 				success = false;
 				e.printStackTrace();

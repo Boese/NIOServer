@@ -3,6 +3,8 @@ package com.nio.pinochleserver.pinochlegames;
 import java.util.List;
 
 import com.nio.pinochleserver.enums.Card;
+import com.nio.pinochleserver.enums.GameResponse;
+import com.nio.pinochleserver.enums.GameState;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.player.Player;
@@ -40,7 +42,7 @@ public interface PinochleGame {
 	/*
 	 * GAME:
 	 */
-	public String play(String move);
+	public GameResponse play(String move);
 	
 	/*
 	 * PREROUND:

@@ -91,7 +91,7 @@ public class ChatClient {
                     // Read IO until process exits.
                     while (true)
                     {
-                            service.selectBlocking();
+                            service.selectNonBlocking();
                     }
             }
             catch (Exception e)

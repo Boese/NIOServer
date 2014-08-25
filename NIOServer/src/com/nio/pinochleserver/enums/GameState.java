@@ -3,6 +3,7 @@ package com.nio.pinochleserver.enums;
 public enum GameState {
 	Start,
 	Deal,
+	CheckForNines,
 	Bid,
 	Pass,
 	Play,

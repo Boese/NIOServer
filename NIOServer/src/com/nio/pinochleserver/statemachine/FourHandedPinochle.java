@@ -11,6 +11,7 @@ import naga.NIOSocket;
 
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.Face;
+import com.nio.pinochleserver.enums.GameResponse;
 import com.nio.pinochleserver.enums.GameState;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
@@ -45,7 +46,9 @@ public class FourHandedPinochle implements PinochleGame {
 	private List<Position> bidders;
 	private ListIterator<Position> biddersIterator;
 	private GameState currentState;
-	
+	private String playerResponse;
+	private List<String> broadcastResponse;
+
 	//** Constructor
 	public FourHandedPinochle() {
 		players = new ArrayList<Player>(4);
@@ -56,63 +59,93 @@ public class FourHandedPinochle implements PinochleGame {
 		highestBidder = null;
 		bidTurn = Position.North;
 		currentState = GameState.Start;
+		playerResponse = "Start Game";
+		broadcastResponse = new ArrayList<String>();
+	}
+
+	public String getCurrentResponse() {
+		return playerResponse;
+	}
+	
+	public List<String> getBroadcastResponse() {
+		return broadcastResponse;
 	}
 
 	//** Pinochle Game Implementation
 	@Override 
-	public String play(String move) {
-		String need = null;
-		switch(currentState) {
-		case Bid:
-			int newBid = Integer.parseInt(move);
-			boolean result = bid(newBid);
-			if(result && highestBidder != null) {
-				currentState = GameState.Pass;
-				need = "pass cards (Press Enter)";
-			}
-			else if(result && highestBidder == null) {
-				currentState = GameState.Deal;
-				need = "everyone passed, redeal (Press Enter)";
-			}
-			else
-				need = currentTurn + "Socket: " + getCurrentSocket() + " bid :";
-			break;
-		case Deal:
-			deal();
-			System.out.println("CurrentTurn : " + currentTurn + "Socket: " + getCurrentSocket());
-			System.out.println(getPlayer(currentTurn));
-			if(!checkForNines()) {
-				need = currentTurn + "Socket: " + getCurrentSocket() + " bid :";
-				currentState = GameState.Bid;
-				startBid();
-			}
-			else
-				need = "A player receieved 5 Nines! redeal (Press Enter)";
-			break;
-		case GameOver:
-			break;
-		case Pass:
-			System.out.println("Winning Bidder = " + highestBidder  + "Socket: " + getCurrentSocket());
-			System.out.println("Bid : " + currentBid);
-			System.out.println("Team that won bid : " + getPlayer(currentTurn).getTeam());
-			System.out.println("Pass 4 cards to Teammate " + getTeamMate(currentTurn) + ", Player " + currentTurn);
-			need = "gameOver";
-			break;
-		case Play:
-			break;
-		case Start:
-			if(players.size() != 4)
-				break;
-			else {
-				currentState=GameState.Deal;
-				need = "deal cards (Press Enter)";
-			}
-			break;
-		default:
-			break;
+	public GameResponse play(String move) {
+		GameResponse gameResponse = GameResponse.Broadcast;
+		broadcastResponse.clear();
 		
-		}
-		return need;
+			switch(currentState) {
+			case Bid:
+				int newBid = Integer.parseInt(move);
+				boolean result = bid(newBid);
+				if(result && highestBidder != null) {
+					currentState = GameState.Pass;
+					for (Player player : players) {
+						broadcastResponse.add("pass cards");
+					}
+				}
+				else if(result && highestBidder == null) {
+					currentState = GameState.Deal;
+					for (Player player : players) {
+						broadcastResponse.add("everyone passed redeal");
+					}
+				}
+				else {
+					playerResponse = currentTurn + " bid :";
+					gameResponse = GameResponse.Player;
+				}
+				break;
+			case Deal:
+				deal();
+				for (Player player : players) {
+					broadcastResponse.add(player.getCurrentCards().toString());
+				}
+				currentState = GameState.CheckForNines;
+				break;
+			case CheckForNines:
+				if(!checkForNines()) {
+					currentState = GameState.Bid;
+					playerResponse = currentTurn + " bid :";
+					gameResponse = GameResponse.Player;
+					startBid();
+				}
+				else {
+					currentState = GameState.Deal;
+					for (Player player : players) {
+						broadcastResponse.add("5 Nines redeal");
+					}
+				}
+				break;
+			case GameOver: 
+					playerResponse = "gameOver";
+				break;
+			case Pass:
+				String temp = "";
+				temp += "Winning Bidder = " + highestBidder  + "Socket: " + getCurrentSocket() + "\n";
+				temp += ("Bid : " + currentBid + "\n");
+				temp += ("Team that won bid : " + getPlayer(currentTurn).getTeam() + "\n");
+				temp += ("Pass 4 cards to Teammate " + getTeamMate(currentTurn) + ", Player " + currentTurn + "\n");
+				temp += "gameOver";
+				for (Player player : players) {
+					broadcastResponse.add(temp);
+				}
+				currentState = GameState.GameOver;
+				break;
+			case Play:
+				break;
+			case Start:
+				for (Player player : players) {
+					broadcastResponse.add("StartGame");
+				}
+					currentState=GameState.Deal;
+				break;
+			default:
+				break;
+			}
+		return gameResponse;
 	}
 	
 	@Override
