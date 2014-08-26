@@ -25,7 +25,6 @@ import com.nio.pinochleserver.player.Player;
 public class FourHandedPinochle implements PinochleGame {
 	
 	//** CONSTANTS **
-	private static final int numberOfCards = 48;
 	private static final int scoreToWin = 150;
 	private static final boolean subtractScoreIfLose = true;
 	private static final boolean trumpMarriageWorthDouble = true;
@@ -198,7 +197,9 @@ public class FourHandedPinochle implements PinochleGame {
 	
 	@Override
 	public void startBid() {
-		bidders = asList(bidTurn,bidTurn.getNext(1),bidTurn.getNext(2),bidTurn.getNext(3));
+		bidders = new ArrayList<Position>();
+		for(int i=0;i<4;i++)
+			bidders.add(bidTurn.getNext(i));
 		biddersIterator = bidders.listIterator();
 		currentTurn = bidTurn;
 		currentBid = 0;
