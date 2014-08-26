@@ -85,18 +85,18 @@ public class FourHandedPinochle implements PinochleGame {
 				boolean result = bid(newBid);
 				if(result && highestBidder != null) {
 					currentState = GameState.Pass;
-					for (Player player : players) {
+					for (int i=0;i<4;i++) {
 						broadcastResponse.add("pass cards");
 					}
 				}
 				else if(result && highestBidder == null) {
 					currentState = GameState.Deal;
-					for (Player player : players) {
+					for (int i=0;i<4;i++) {
 						broadcastResponse.add("everyone passed redeal");
 					}
 				}
 				else {
-					playerResponse = currentTurn + " bid :";
+					playerResponse = "CurrentBid: " + currentBid + "\n" + currentTurn + " bid :";
 					gameResponse = GameResponse.Player;
 				}
 				break;
@@ -110,22 +110,23 @@ public class FourHandedPinochle implements PinochleGame {
 			case CheckForNines:
 				if(!checkForNines()) {
 					currentState = GameState.Bid;
-					playerResponse = currentTurn + " bid :";
-					gameResponse = GameResponse.Player;
 					startBid();
+					playerResponse = "CurrentBid: " + currentBid + "\n" + currentTurn + " bid :";
+					gameResponse = GameResponse.Player;
 				}
 				else {
 					currentState = GameState.Deal;
-					for (Player player : players) {
+					for (int i=0;i<4;i++) {
 						broadcastResponse.add("5 Nines redeal");
 					}
 				}
 				break;
 			case Pause:currentState = GameState.Start;
-					for (Player player : players) {
+					for (int i=0;i<4;i++) {
 						broadcastResponse.add("Round is restarting because a player left");
 					}
 					gameResponse = GameResponse.Pause;
+					playerResponse = "";
 				break;
 			case GameOver: 
 					playerResponse = "gameOver";
@@ -137,7 +138,7 @@ public class FourHandedPinochle implements PinochleGame {
 				temp += ("Team that won bid : " + getPlayer(currentTurn).getTeam() + "\n");
 				temp += ("Pass 4 cards to Teammate " + getTeamMate(currentTurn) + ", Player " + currentTurn + "\n");
 				temp += "gameOver";
-				for (Player player : players) {
+				for (int i=0;i<4;i++) {
 					broadcastResponse.add(temp);
 				}
 				currentState = GameState.GameOver;
@@ -145,7 +146,7 @@ public class FourHandedPinochle implements PinochleGame {
 			case Play:
 				break;
 			case Start:
-				for (Player player : players) {
+				for (int i=0;i<4;i++) {
 					broadcastResponse.add("StartGame");
 				}
 					currentState=GameState.Deal;
@@ -196,21 +197,16 @@ public class FourHandedPinochle implements PinochleGame {
 	}
 	
 	@Override
-	public Position startBid() {
-		bidders = new ArrayList<Position>();
-		bidders.add(bidTurn);
-		bidders.add(bidTurn.getNext(1));
-		bidders.add(bidTurn.getNext(2));
-		bidders.add(bidTurn.getNext(3));
+	public void startBid() {
+		bidders = asList(bidTurn,bidTurn.getNext(1),bidTurn.getNext(2),bidTurn.getNext(3));
 		biddersIterator = bidders.listIterator();
-		incTurn();
-		return currentTurn;
+		currentTurn = bidTurn;
+		currentBid = 0;
 	}
 
 	// returns true if bidding is done, increment bidTurn
 	@Override
 	public boolean bid(int bid) {
-		
 		Position currentPosition = biddersIterator.next();
 		
 		// bidder passed remove bidder
@@ -225,7 +221,6 @@ public class FourHandedPinochle implements PinochleGame {
 		}
 		// bid not high enough prompt again
 		else {
-			System.out.println("must enter bid higher than " + currentBid);
 			currentTurn = biddersIterator.previous();
 			return false;
 		}
@@ -233,11 +228,13 @@ public class FourHandedPinochle implements PinochleGame {
 		//one bidder left and at least one bid
 		if(bidders.size() == 1 && currentBid != 0) {
 			currentTurn = highestBidder;
+			incTurn();
 			return true;
 		}
 		//everyone passed
 		if(bidders.size() == 0) {
 			currentTurn = bidTurn;
+			incTurn();
 			return true;
 		}
 		
@@ -345,6 +342,15 @@ public class FourHandedPinochle implements PinochleGame {
 				tempPlayer = player;
 		}
 		return tempPlayer;
+	}
+	
+	public Position getPosition(NIOSocket socket) {
+		Position tempPosition = null;
+		for (Player player : players) {
+			if(player.getSocket() == socket)
+				tempPosition = player.getPosition();
+		}
+		return tempPosition;
 	}
 	
 	public boolean gameFull() {
