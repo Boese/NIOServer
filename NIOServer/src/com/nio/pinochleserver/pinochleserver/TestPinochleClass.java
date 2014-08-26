@@ -1,10 +1,33 @@
 package com.nio.pinochleserver.pinochleserver;
 
+import static java.util.Arrays.asList;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.nio.pinochleserver.enums.Card;
+import com.nio.pinochleserver.enums.Face;
+import com.nio.pinochleserver.enums.Suit;
+import com.nio.pinochleserver.helperfunctions.CalculateMeld;
+
 
 public class TestPinochleClass {
 
 	public static void main(String[] args) throws Exception {
-		PinochleDriver p = new PinochleDriver();
-		p.startGame();
+		List<Card> cards = new ArrayList<Card>();
+		cards = asList(
+				new Card(Suit.Hearts, Face.Jack),
+				new Card(Suit.Hearts, Face.Queen),
+				new Card(Suit.Hearts, Face.King),
+				new Card(Suit.Hearts, Face.Ten),
+				new Card(Suit.Hearts, Face.Ace),
+				new Card(Suit.Diamonds, Face.Jack),
+				new Card(Suit.Spades, Face.Queen),
+				new Card(Suit.Hearts, Face.Nine)
+				);
+		
+		CalculateMeld c = new CalculateMeld(Suit.Hearts,cards);
+		System.out.println(cards);
+		System.out.println("Score : " + c.calculate());
 	}
 }
