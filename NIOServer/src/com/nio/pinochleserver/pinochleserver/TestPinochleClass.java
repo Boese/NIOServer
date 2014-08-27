@@ -21,9 +21,12 @@ public class TestPinochleClass {
 				new Card(Suit.Hearts, Face.King),
 				new Card(Suit.Hearts, Face.Ten),
 				new Card(Suit.Hearts, Face.Ace),
-				new Card(Suit.Diamonds, Face.Jack),
-				new Card(Suit.Spades, Face.Queen),
-				new Card(Suit.Hearts, Face.Nine)
+				new Card(Suit.Hearts, Face.Jack),
+				new Card(Suit.Hearts, Face.Queen),
+				new Card(Suit.Hearts, Face.King),
+				new Card(Suit.Hearts, Face.Ten),
+				new Card(Suit.Diamonds, Face.Queen),
+				new Card(Suit.Clubs, Face.King)
 				);
 		
 		CalculateMeld c = new CalculateMeld(Suit.Hearts,cards);

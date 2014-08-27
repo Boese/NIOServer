@@ -1,7 +1,5 @@
 package com.nio.pinochleserver.enums;
 
-import java.util.List;
-
 public class Card {
 	public Suit suit;
 	public Face face;
@@ -24,5 +22,11 @@ public class Card {
 	        if (x.face == face && x.suit == suit) return true;
 	        return false;
 	    }
+
+	public boolean contains(Card c) {
+		if(c.equals(this)) 
+			return true;
+		return false;
+	}
 	
 }

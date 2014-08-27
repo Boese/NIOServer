@@ -5,6 +5,7 @@ import static java.util.Arrays.asList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ListIterator;
 
 import com.nio.pinochleserver.enums.Face;
 import com.nio.pinochleserver.enums.Suit;
@@ -15,7 +16,6 @@ public class CalculateMeld {
 	private Suit trump;
 	private List<Card> cards;
 	private int score;
-	private boolean playerHasRun;
 	
 	private List<Card> run;
 	private List<Card> pinochle;
@@ -23,7 +23,7 @@ public class CalculateMeld {
 	private List<Card> kings;
 	private List<Card> queens;
 	private List<Card> jacks;
-	private Card dix;
+	private List<Card> dix;
 	
 	private void initialize() {
 		run = asList(
@@ -61,31 +61,100 @@ public class CalculateMeld {
 				new Card(Suit.Hearts,Face.Jack),
 				new Card(Suit.Spades,Face.Jack)
 				);
-		dix = new Card(trump,Face.Nine);
+		dix = asList(new Card(trump, Face.Nine));
 	}
 	
 	public CalculateMeld(Suit trump, List<Card> cards) {
 		this.trump = trump;
-		this.cards = cards;
+		this.cards = new ArrayList<Card>(cards);
 		this.score = 0;
-		this.playerHasRun = false;
 		initialize();
 	}
 	
+	//**Helper Functions **
+	// Will return true if first param List<Card> contains double of second param List<Card>
+		public boolean containsDouble(final List<Card> cardList, final List<Card> containsList) {
+			List<Card> mutableCards = new ArrayList<Card>(cardList);
+			
+			List<Card> doubleList = new ArrayList<Card>(containsList); doubleList.addAll(containsList);
+			
+			ListIterator<Card> cardIterator = doubleList.listIterator();
+			
+			while(cardIterator.nextIndex() < doubleList.size() && mutableCards.size() >= 0) {
+				int potentialMatch = cardIterator.nextIndex();
+				if(mutableCards.contains(doubleList.get(potentialMatch))) {
+					mutableCards.remove(doubleList.get(potentialMatch));
+					doubleList.remove(potentialMatch);
+					cardIterator = doubleList.listIterator();
+				}
+				else
+					cardIterator.next();
+			}
+			
+			return (doubleList.size() == 0) ? true : false;
+		}
+		
+		// Will remove only one card from constCards from mutableCards
+		// returns mutable Cards
+		public List<Card> removeOne(List<Card> mutableCards, final List<Card> constCards ) {
+			List<Card> copyRun = new ArrayList<Card>(constCards);
+			ListIterator<Card> cardsIterator = copyRun.listIterator();
+			while(cardsIterator.nextIndex() < copyRun.size() && mutableCards.size() >= 0) {
+				int potentialmatch = cardsIterator.nextIndex();
+				if(mutableCards.contains(run.get(potentialmatch))) {
+					mutableCards.remove(potentialmatch);
+					copyRun.remove(potentialmatch);
+					cardsIterator = copyRun.listIterator();
+				}
+				else
+					cardsIterator.next();
+			}
+			return mutableCards;
+		}
+		// *****************************
+	
 	public int calculate() {
-		// runs, 4 of a kind, pinochle, dix
-		if(cards.containsAll(run)) {score += 15; playerHasRun = true;}
-		if(cards.containsAll(aces)) score += 10;
-		if(cards.containsAll(kings)) score += 8;
-		if(cards.containsAll(queens)) score += 6;
-		if(cards.containsAll(jacks)) score += 4;
-		if(cards.containsAll(pinochle)) score += 4;
-		if(cards.contains(dix)) score += 1;
+		// Initialize mutable temp list
+		List<Card> temp = new ArrayList<Card>(cards);
+		
+		// boolean flags for run, doublerun
+		boolean hasRun = false;
+		boolean hasDoubleRun = false;
+		
+		// contains single: runs, 4 of a kind, pinochle, dix? Set flag for hasRun if true.
+		if(temp.containsAll(run)) { score += 15; hasRun = true;}
+		if(temp.containsAll(aces)) score += 10;
+		if(temp.containsAll(kings)) score += 8;
+		if(temp.containsAll(queens)) score += 6;
+		if(temp.containsAll(jacks)) score += 4;
+		if(temp.containsAll(pinochle)) score += 4;
+		if(temp.containsAll(dix)) score += 1;
+		
+		// contains double : runs, 4 of a kind, pinochle, dix? Subtact single score if true;
+		// Set flag for hasDouble run if true;
+		if(containsDouble(temp, run)){ score += 150 - 15; hasDoubleRun = true;}
+		if(containsDouble(temp, aces)) score += 100 - 10;
+		if(containsDouble(temp, kings)) score += 80 - 8;
+		if(containsDouble(temp, queens)) score += 60 - 6;
+		if(containsDouble(temp, jacks)) score += 40 - 4;
+		if(containsDouble(temp, pinochle)) score += 30 - 4;
+		if(containsDouble(temp, dix)) score += 2 - 1;
+		
+		// Check Flags before processing Marriages. 
+		// Remove run cards if true to not count duplicates. (*Only Trump)
+		if(hasRun) {
+			if(hasDoubleRun) {
+				temp.removeAll(run); // will remove all trump cards
+			}
+			else { // only remove one run
+				temp = new ArrayList<Card>(removeOne(temp,run));
+			}
+		}
 		
 		// marriages & marriages in trump
 		List<Card> kingsInCards = new ArrayList<Card>();
 		List<Card> queensInCards = new ArrayList<Card>();
-		for (Card card : cards) {
+		for (Card card : temp) {
 			if(card.face == Face.King)
 				kingsInCards.add(card);
 			if(card.face == Face.Queen)
@@ -98,7 +167,6 @@ public class CalculateMeld {
 			int i = queensInCards.indexOf(new Card(card.suit,Face.Queen));
 			if(i != -1) {
 				if(card.suit == trump && queensInCards.get(i).suit == trump) {
-					if(!playerHasRun)
 						score +=4;
 				}
 				else {
@@ -107,28 +175,6 @@ public class CalculateMeld {
 				queensInCards.remove(i);
 			}
 		}
-		
-		// doubles of run, pinochle, aces, kings, queens, jacks
-		List<Card> dRun = new ArrayList<Card>(run);
-		List<Card> dPinochle = new ArrayList<Card>(pinochle);
-		List<Card> dAces = new ArrayList<Card>(aces);
-		List<Card> dKings = new ArrayList<Card>(kings);
-		List<Card> dQueens = new ArrayList<Card>(queens);
-		List<Card> dJacks = new ArrayList<Card>(jacks);
-		
-		dRun.addAll(run);
-		dPinochle.addAll(pinochle);
-		dAces.addAll(aces);
-		dKings.addAll(kings);
-		dQueens.addAll(queens);
-		dJacks.addAll(jacks);
-		
-		if(cards.containsAll(dRun)) score += 150 - 15;
-		if(cards.containsAll(dPinochle)) score += 30 - 4;
-		if(cards.containsAll(dAces)) score += 100 - 10;
-		if(cards.containsAll(dKings)) score += 80 - 8;
-		if(cards.containsAll(dQueens)) score += 60 - 6;
-		if(cards.containsAll(dJacks)) score += 40 - 4;
 		
 		return score;
 	}
