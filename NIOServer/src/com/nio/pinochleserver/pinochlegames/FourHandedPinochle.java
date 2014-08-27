@@ -77,6 +77,7 @@ public class FourHandedPinochle implements PinochleGame {
 		
 		GameResponse gameResponse = GameResponse.Broadcast;
 		broadcastResponse.clear();	//Clear out broadcast list
+		playerResponse = "";
 		
 			switch(currentState) {
 			case Bid:
@@ -84,9 +85,6 @@ public class FourHandedPinochle implements PinochleGame {
 				boolean result = bid(newBid);
 				if(result && highestBidder != null) {
 					currentState = GameState.Pass;
-					for (int i=0;i<4;i++) {
-						broadcastResponse.add("pass cards");
-					}
 				}
 				else if(result && highestBidder == null) {
 					currentState = GameState.Deal;
@@ -125,18 +123,17 @@ public class FourHandedPinochle implements PinochleGame {
 						broadcastResponse.add("Round is restarting because a player left");
 					}
 					gameResponse = GameResponse.Pause;
-					playerResponse = "";
 				break;
 			case GameOver: 
-					playerResponse = "gameOver";
+				playerResponse = "gameOver";
 				break;
 			case Pass:
 				String temp = "";
-				temp += "Winning Bidder = " + highestBidder  + "Socket: " + getCurrentSocket() + "\n";
+				temp += "Winning Bidder = " + highestBidder + "\n";
 				temp += ("Bid : " + currentBid + "\n");
 				temp += ("Team that won bid : " + getPlayer(currentTurn).getTeam() + "\n");
-				temp += ("Pass 4 cards to Teammate " + getTeamMate(currentTurn) + ", Player " + currentTurn + "\n");
-				temp += "gameOver";
+				temp += ("*** Starting pass between " + highestBidder + " and partner " + getTeamMate(highestBidder) + " ***\n");
+				temp += "game over";
 				for (int i=0;i<4;i++) {
 					broadcastResponse.add(temp);
 				}
@@ -203,6 +200,7 @@ public class FourHandedPinochle implements PinochleGame {
 		biddersIterator = bidders.listIterator();
 		currentTurn = bidTurn;
 		currentBid = 0;
+		highestBidder = null;
 	}
 
 	// returns true if bidding is done, increment bidTurn

@@ -114,15 +114,21 @@ public class PinochleServer implements ServerSocketObserver{
 		}
 		
 		private void broadcastGame(List<String> messages) {
+			if(messages.contains("") || messages.contains(null) || messages.isEmpty())
+				return;
+			
 			int i = 0;
 			for (NIOSocket nioSocket : sockets) {
 				nioSocket.write(messages.get(i).getBytes());
 				i++;
 			}
 		}
-		private void broadcast(String messages) {
+		private void broadcast(String message) {
+			if(message.equalsIgnoreCase("") || message == null)
+				return;
+			
 			for (NIOSocket nioSocket : sockets) {
-				nioSocket.write(messages.getBytes());
+				nioSocket.write(message.getBytes());
 			}
 		}
 		
