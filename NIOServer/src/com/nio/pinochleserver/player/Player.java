@@ -2,6 +2,7 @@ package com.nio.pinochleserver.player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.CardComparator;
@@ -17,10 +18,13 @@ public class Player {
 	private List<Card> currentCards; //current cards List<enum cards>
 	private int currentMeld; //current meld score for player
 	private int currentBid;
+	private Position teamMate;
+
 	private NIOSocket socket;
 	
 	public Player(Position position, int team, NIOSocket socket) {
 		this.position=position;
+		this.teamMate = position.getNext(2);
 		this.team = team;
 		this.currentCards = new ArrayList<Card>();
 		this.currentMeld = 0;
@@ -43,25 +47,53 @@ public class Player {
 	
 	public String toCardString() {
 		currentCards.sort(new CardComparator());
-		String hearts = "Hearts : ";
-		String diamonds = "Diamonds : ";
-		String clubs = "Clubs : ";
-		String spades = "Spades : ";
+		String hearts = "Hearts : \n";
+		String diamonds = "Diamonds : \n";
+		String clubs = "Clubs : \n";
+		String spades = "Spades : \n";
+		int i = 1;
 		for (Card card : currentCards) {
 			Suit s = card.suit;
 			switch(s) {
-			case Clubs: clubs += card + " ";
+			case Clubs: clubs += "\t" + i + " - " + card + "\n";
 				break;
-			case Diamonds: diamonds += card + " ";
+			case Diamonds: diamonds += "\t" + i + " - " + card + "\n";
 				break;
-			case Hearts: hearts += card + " ";
+			case Hearts: hearts += "\t" + i + " - " + card + "\n";
 				break;
-			case Spades: spades += card + " ";
+			case Spades: spades += "\t" + i + " - " + card + "\n";
 				break;
-			}
+			} i++;
 		}
-		String returnCards = hearts + "\n" + clubs + "\n" + diamonds + "\n" + spades + "\n";
+		String returnCards = hearts + spades + diamonds + clubs;
 		return returnCards;
+	}
+	
+	public List<Card> addCardsToCurrent(List<Card> cards) {
+		List<Card> temp = new ArrayList<Card>(currentCards);
+		temp.addAll(cards);
+		return temp;
+	}
+	
+	public List<Card> removeCardsFromCurrent(List<Card> cards) {
+		List<Card> mutableCards = new ArrayList<Card>(cards);
+		List<Card> copyOfCards = new ArrayList<Card>(cards);
+		ListIterator<Card> cardsIterator = copyOfCards.listIterator();
+		while(cardsIterator.nextIndex() < copyOfCards.size() && mutableCards.size() >= 0) {
+			int potentialmatch = cardsIterator.nextIndex();
+			if(mutableCards.contains(mutableCards.get(potentialmatch))) {
+				mutableCards.remove(potentialmatch);
+				copyOfCards.remove(potentialmatch);
+				cardsIterator = copyOfCards.listIterator();
+			}
+			else
+				cardsIterator.next();
+		}
+		return mutableCards;
+	}
+	
+	public Position getTeamMate() {
+		return teamMate;
 	}
 	
 	public void setSocket(NIOSocket socket) {

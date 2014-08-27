@@ -5,7 +5,11 @@ public enum GameState {
 	Deal,
 	CheckForNines,
 	Bid,
-	Pass,
+	SelectTrump,
+	AnnounceTrump,
+	PassTo,
+	ReturnPass,
+	Meld,
 	Play,
 	Pause,
 	GameOver;

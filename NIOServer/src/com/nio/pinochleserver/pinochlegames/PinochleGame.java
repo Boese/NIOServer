@@ -50,7 +50,9 @@ public interface PinochleGame {
 	public boolean checkForNines();
 	public void startBid();
 	public boolean bid(int bid);
-	public void passCards(Player from, Player to, List<Card> cards);
+	public void selectTrump(Suit s);
+	public void startPass();
+	public void passCards(Player from, Player to);
 	public int calculateMeld(Suit trump, List<Card> cards);
 	public boolean possibleToMakeBid();
 	

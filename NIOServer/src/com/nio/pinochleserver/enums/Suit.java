@@ -2,7 +2,10 @@ package com.nio.pinochleserver.enums;
 
 public enum Suit {
 	Hearts,
-	Diamonds,
 	Spades,
-	Clubs
+	Diamonds,
+	Clubs;
+	public Suit getNext(int i) {
+		return values()[(ordinal()+i) % values().length];
+	}
 }

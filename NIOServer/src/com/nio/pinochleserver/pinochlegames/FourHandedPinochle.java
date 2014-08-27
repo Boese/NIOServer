@@ -15,6 +15,7 @@ import com.nio.pinochleserver.enums.GameResponse;
 import com.nio.pinochleserver.enums.GameState;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
+import com.nio.pinochleserver.helperfunctions.CalculateMeld;
 import com.nio.pinochleserver.player.Player;
 
 //StateMachine for Pinochle FourHandedPinochle
@@ -46,6 +47,7 @@ public class FourHandedPinochle implements PinochleGame {
 	private GameState currentState;
 	private String playerResponse;
 	private List<String> broadcastResponse;
+	private List<Card> currentPassCards;
 
 	//** Constructor
 	public FourHandedPinochle() {
@@ -70,6 +72,12 @@ public class FourHandedPinochle implements PinochleGame {
 	}
 
 	//** Pinochle Game Implementation
+	
+	/*
+	 * known bug : 
+	 * When currentState switches and player request is needed on next state
+	 * then the currentState must ask player first rather than just in state
+	 */
 	@Override 
 	public GameResponse play(String move) {
 		if(!gameFull())
@@ -84,7 +92,13 @@ public class FourHandedPinochle implements PinochleGame {
 				int newBid = Integer.parseInt(move);
 				boolean result = bid(newBid);
 				if(result && highestBidder != null) {
-					currentState = GameState.Pass;
+					currentState = GameState.SelectTrump;
+					for(int i=0;i<4;i++) {
+						int num = i+1;
+						playerResponse += "\t" + Suit.Hearts.getNext(i) + " - " + num;
+					}
+					playerResponse += "\n\nSelect trump (1-4) : ";
+					gameResponse = GameResponse.Player;
 				}
 				else if(result && highestBidder == null) {
 					currentState = GameState.Deal;
@@ -125,17 +139,73 @@ public class FourHandedPinochle implements PinochleGame {
 					gameResponse = GameResponse.Pause;
 				break;
 			case GameOver: 
-				playerResponse = "gameOver";
+				playerResponse = " ** GAMEOVER **";
 				break;
-			case Pass:
+			case SelectTrump:
+				int selection = Integer.parseInt(move);
+				if(selection > 0 && selection < 5) {
+					selectTrump(Suit.Hearts.getNext(selection-1));
+					currentState = GameState.AnnounceTrump;
+					for (int i=0;i<4;i++) {
+						broadcastResponse.add("Trump is " + currentTrump);
+					}
+				}
+				else {
+					for(int i=0;i<4;i++) {
+						int num = i+1;
+						playerResponse += "\t" + Suit.Hearts.getNext(i) + " - " + num + "\n";
+					}
+					playerResponse += "\n\nSelect trump (1-4) : ";
+					gameResponse = GameResponse.Player;
+				}
+				break;
+			case AnnounceTrump:
 				String temp = "";
 				temp += "Winning Bidder = " + highestBidder + "\n";
 				temp += ("Bid : " + currentBid + "\n");
 				temp += ("Team that won bid : " + getPlayer(currentTurn).getTeam() + "\n");
 				temp += ("*** Starting pass between " + highestBidder + " and partner " + getTeamMate(highestBidder) + " ***\n");
-				temp += "game over";
 				for (int i=0;i<4;i++) {
 					broadcastResponse.add(temp);
+				}
+				currentState = GameState.PassTo;
+				startPass();
+				break;
+			case PassTo:
+				if(move != null) {
+					int cardSelection = Integer.parseInt(move);
+					cardSelection--;
+					Player p = getPlayer(currentTurn);
+					if(cardSelection >= 0 && cardSelection < 12) {
+						Card c = p.getCurrentCards().get(cardSelection);
+						currentPassCards.add(c);
+							if(currentPassCards.size() == 4) {
+								passCards(p, getPlayer(p.getTeamMate()));
+								currentState = GameState.ReturnPass;
+								currentTurn = p.getTeamMate();
+								playerResponse = "Cards from TeamMate : \n" + currentPassCards + "\nEnter to continue";
+								gameResponse = GameResponse.Player;
+							}
+					}
+					else {
+						playerResponse = "# Cards Selected : " + currentPassCards.size() + "\nSelect Card for pass between (1-12) : ";
+						gameResponse = GameResponse.Player;
+					}
+				}
+				else {
+					playerResponse = "# Cards Selected : " + currentPassCards.size() + "\nSelect Card for pass between(1-12) : ";
+					gameResponse = GameResponse.Player;
+				}
+				break;
+			case ReturnPass:
+				for (int i=0;i<4;i++) {
+					broadcastResponse.add("Return Pass");
+				}
+				currentState = GameState.Meld;
+				break;
+			case Meld: 
+				for (Player player : players) {
+					broadcastResponse.add("Meld : " + calculateMeld(currentTrump, player.getCurrentCards()));
 				}
 				currentState = GameState.GameOver;
 				break;
@@ -246,20 +316,28 @@ public class FourHandedPinochle implements PinochleGame {
 		biddersIterator.previous();
 		return false;
 	}
+	
+	@Override
+	public void selectTrump(Suit s) {
+		currentTrump = s;
+	}
 
 	@Override
-	public void passCards(Player from, Player to, List<Card> cards) {
-		List<Card> tempCardsTo = to.getCurrentCards();
-		for (Card card : tempCardsTo) {
-			tempCardsTo.add(card);
-		}
-		to.setCards(cards);
+	public void startPass() {
+		currentPassCards = new ArrayList<Card>();
+	}
+	
+	@Override
+	public void passCards(Player from, Player to) {
+		List<Card> temp = to.addCardsToCurrent(currentPassCards);
+		to.setCards(temp);
+		temp = from.removeCardsFromCurrent(currentPassCards);
+		from.setCards(temp);
 	}
 
 	@Override
 	public int calculateMeld(Suit trump, List<Card> cards) {
-		// TODO Auto-generated method stub
-		return 10;
+		return new CalculateMeld(trump,cards).calculate();
 	}
 
 	@Override
@@ -383,4 +461,6 @@ public class FourHandedPinochle implements PinochleGame {
 	public Position getTeamMate(Position p) {
 		return p.getNext(2);
 	}
+
+	
 }

@@ -14,7 +14,7 @@ import com.nio.pinochleserver.helperfunctions.CalculateMeld;
 public class TestPinochleClass {
 
 	public static void main(String[] args) throws Exception {
-		List<Card> cards = new ArrayList<Card>();
+		/*List<Card> cards = new ArrayList<Card>();
 		cards = asList(
 				new Card(Suit.Hearts, Face.Jack),
 				new Card(Suit.Hearts, Face.Queen),
@@ -29,8 +29,9 @@ public class TestPinochleClass {
 				new Card(Suit.Clubs, Face.King)
 				);
 		
-		CalculateMeld c = new CalculateMeld(Suit.Hearts,cards);
 		System.out.println(cards);
-		System.out.println("Score : " + c.calculate());
+		System.out.println("Score : " + new CalculateMeld(Suit.Hearts,cards).calculate());*/
+		PinochleDriver d = new PinochleDriver();
+		d.startGame();
 	}
 }
