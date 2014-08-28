@@ -49,6 +49,7 @@ public class Pinochle implements iPinochleState {
 	private iPinochleState Meld = new Meld();
 	private iPinochleState Pause = new Pause();
 	private iPinochleState Gameover = new Gameover();
+	//		iPinochleState PlayRound
 	
 	//** Current iPinochleState
 	private iPinochleState currentState = Start;
@@ -101,7 +102,6 @@ public class Pinochle implements iPinochleState {
 	}
 	
 	private class Deal implements iPinochleState {
-
 		@Override
 		public GameResponse Play(String move) {
 			deal();
@@ -119,7 +119,7 @@ public class Pinochle implements iPinochleState {
 			return GameResponse.Broadcast;
 		}
 		
-		public void deal() {
+		private void deal() {
 			final List<Suit> suits = asList(Suit.Hearts,Suit.Diamonds,Suit.Spades,Suit.Clubs);
 			final List<Face> faces = asList(Face.Nine,Face.Jack,Face.Queen,Face.King,Face.Ten,Face.Ace);
 			
@@ -154,7 +154,6 @@ public class Pinochle implements iPinochleState {
 			}
 			return result;
 		}
-		
 	}
 	
 	private class Bid implements iPinochleState {
@@ -201,7 +200,7 @@ public class Pinochle implements iPinochleState {
 			bidTurn = bidTurn.getNext(1);
 		}
 		
-		public void startBid() {
+		private void startBid() {
 			bidders = new ArrayList<Position>();
 			for(int i=0;i<4;i++)
 				bidders.add(bidTurn.getNext(i));
@@ -211,7 +210,7 @@ public class Pinochle implements iPinochleState {
 			highestBidder = null;
 		}
 		
-		public boolean bid(int bid) {
+		private boolean bid(int bid) {
 			Position currentPosition = biddersIterator.next();
 			
 			// bidder passed remove bidder
@@ -333,71 +332,71 @@ public class Pinochle implements iPinochleState {
 	
 	//** Helper Methods
 		
-		private Position findNextAvailablePosition() {
-			List<Position> availPositions = new ArrayList<Position>();
-			availPositions.add(Position.North);
-			availPositions.add(Position.East);
-			availPositions.add(Position.South);
-			availPositions.add(Position.West);
+	private Position findNextAvailablePosition() {
+		List<Position> availPositions = new ArrayList<Position>();
+		availPositions.add(Position.North);
+		availPositions.add(Position.East);
+		availPositions.add(Position.South);
+		availPositions.add(Position.West);
+		for (Player player : players) {
+			availPositions.remove(player.getPosition());
+		}
+		return availPositions.get(0);
+	}
+		
+	public void addPlayer(NIOSocket socket) throws Exception {
+		Position position = findNextAvailablePosition();
+		int teamNum = 1;
+		if(position.equals(Position.East) || position.equals(Position.West))
+			teamNum = 2;
+		Player p = new Player(position,teamNum,socket);
+		if(this.players.size() <= 3)
+			this.players.add(p);
+		else
+			throw new Exception("FourHandedPinochle Full");
+	}
+		
+	public boolean removePlayer(NIOSocket socket) throws Exception {
+		boolean success = false;
+		if(this.players.size() > 0) {
 			for (Player player : players) {
-				availPositions.remove(player.getPosition());
-			}
-			return availPositions.get(0);
-		}
-		
-		public void addPlayer(NIOSocket socket) throws Exception {
-			Position position = findNextAvailablePosition();
-			int teamNum = 1;
-			if(position.equals(Position.East) || position.equals(Position.West))
-				teamNum = 2;
-			Player p = new Player(position,teamNum,socket);
-			if(this.players.size() <= 3)
-				this.players.add(p);
-			else
-				throw new Exception("FourHandedPinochle Full");
-		}
-		
-		public boolean removePlayer(NIOSocket socket) throws Exception {
-			boolean success = false;
-			if(this.players.size() > 0) {
-				for (Player player : players) {
-					if(player.getSocket() == socket) {
-						success = true;
-						players.remove(player);
-						break;
-					}
+				if(player.getSocket() == socket) {
+					success = true;
+					players.remove(player);
+					break;
 				}
 			}
-			return success;
 		}
+		return success;
+	}
 		
-		public Player getPlayer(Position position) {
-			Player tempPlayer = null;
-			for (Player player : players) {
-				if(player.getPosition() == position)
-					tempPlayer = player;
-			}
-			return tempPlayer;
+	public Player getPlayer(Position position) {
+		Player tempPlayer = null;
+		for (Player player : players) {
+			if(player.getPosition() == position)
+				tempPlayer = player;
 		}
+		return tempPlayer;
+	}
 		
-		public Position getPosition(NIOSocket socket) {
-			Position tempPosition = null;
-			for (Player player : players) {
-				if(player.getSocket() == socket)
-					tempPosition = player.getPosition();
-			}
-			return tempPosition;
+	public Position getPosition(NIOSocket socket) {
+		Position tempPosition = null;
+		for (Player player : players) {
+			if(player.getSocket() == socket)
+				tempPosition = player.getPosition();
 		}
+		return tempPosition;
+	}
 		
-		public boolean gameFull() {
-			boolean full = false;
-			if(players.size() == 4) {
-				full = true;
-			}
-			return full;
+	public boolean gameFull() {
+		boolean full = false;
+		if(players.size() == 4) {
+			full = true;
 		}
-		
-		public NIOSocket getCurrentSocket() {
-			return getPlayer(currentTurn).getSocket();
-		}
+		return full;
+	}
+	
+	public NIOSocket getCurrentSocket() {
+		return getPlayer(currentTurn).getSocket();
+	}
 }
