@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import org.json.JSONObject;
+
 import com.nio.pinochleserver.enums.GameResponse;
 import com.nio.pinochleserver.pinochlegames.Pinochle;
 
@@ -106,7 +108,7 @@ public class PinochleServer implements ServerSocketObserver{
         private DelayedEvent disconnectEvent;
         private PinochleServer server;
         private NIOSocket currentSocket;
-        private String socketResponse;
+        private JSONObject socketResponse;
         private boolean gameOver = false;
 		
 		private Game(PinochleServer server) {
@@ -114,7 +116,7 @@ public class PinochleServer implements ServerSocketObserver{
 			this.sockets = new ArrayList<NIOSocket>();
 			this.server = server;
 			currentSocket = null;
-			socketResponse = "";
+			socketResponse = null;
 		}
 		
 		private void broadcastGame(List<String> messages) {
@@ -220,7 +222,7 @@ public class PinochleServer implements ServerSocketObserver{
 		public void packetReceived(NIOSocket socket, byte[] packet) {
 			if(currentSocket == socket) {
 				if (disconnectEvent != null) disconnectEvent.cancel(); 
-				socketResponse = new String(packet);
+				socketResponse = new JSONObject(packet);
 				currentSocket = null;
 				drivePlay();
 			}

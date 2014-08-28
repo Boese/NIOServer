@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import naga.NIOService;
 import naga.NIOSocket;
 import naga.SocketObserver;
@@ -70,6 +73,22 @@ public class PinochleClient {
                             {
                             	// Create the string. For real life scenarios, you'd handle exceptions here.
                                 String message = new String(packet).trim();
+								try {
+									JSONObject receive = new JSONObject(message);
+									switch(receive.getString("type")) {
+	                                case "card": message = "Need a card";
+	                                	break;
+	                                case "bid" : message = "Need a Bid";
+	                                	break;
+	                                case "trump" : message = "Need to select trump";
+	                                	break;
+	                                case "passCards" : message = "Select 4 cards to pass";
+	                                	break;
+	                                case "print" : message = receive.getString("print");
+	                                }
+								} 
+								catch (JSONException e) {}
+                                
                                 System.out.println(message);
                                 // Ignore empty lines
                                 if (message.length() == 0) return;
