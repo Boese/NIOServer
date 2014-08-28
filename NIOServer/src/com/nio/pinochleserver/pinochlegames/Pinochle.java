@@ -12,7 +12,6 @@ import naga.NIOSocket;
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.Face;
 import com.nio.pinochleserver.enums.GameResponse;
-import com.nio.pinochleserver.enums.GameState;
 import com.nio.pinochleserver.enums.Move;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
