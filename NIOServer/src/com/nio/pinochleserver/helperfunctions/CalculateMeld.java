@@ -64,6 +64,8 @@ public class CalculateMeld {
 		dix = asList(new Card(trump, Face.Nine));
 	}
 	
+	// Will calculate meld based on trump and cards
+	// ** if trump is null, it will not calculate based on trump
 	public CalculateMeld(Suit trump, List<Card> cards) {
 		this.trump = trump;
 		this.cards = new ArrayList<Card>(cards);
@@ -122,27 +124,27 @@ public class CalculateMeld {
 		boolean hasDoubleRun = false;
 		
 		// contains single: runs, 4 of a kind, pinochle, dix? Set flag for hasRun if true.
-		if(temp.containsAll(run)) { score += 15; hasRun = true;}
+		if(temp.containsAll(run) && trump != null) { score += 15; hasRun = true;}
 		if(temp.containsAll(aces)) score += 10;
 		if(temp.containsAll(kings)) score += 8;
 		if(temp.containsAll(queens)) score += 6;
 		if(temp.containsAll(jacks)) score += 4;
 		if(temp.containsAll(pinochle)) score += 4;
-		if(temp.containsAll(dix)) score += 1;
+		if(temp.containsAll(dix) && trump != null) score += 1;
 		
 		// contains double : runs, 4 of a kind, pinochle, dix? Subtact single score if true;
 		// Set flag for hasDouble run if true;
-		if(containsDouble(temp, run)){ score += 150 - 15; hasDoubleRun = true;}
+		if(containsDouble(temp, run) && trump != null){ score += 150 - 15; hasDoubleRun = true;}
 		if(containsDouble(temp, aces)) score += 100 - 10;
 		if(containsDouble(temp, kings)) score += 80 - 8;
 		if(containsDouble(temp, queens)) score += 60 - 6;
 		if(containsDouble(temp, jacks)) score += 40 - 4;
 		if(containsDouble(temp, pinochle)) score += 30 - 4;
-		if(containsDouble(temp, dix)) score += 2 - 1;
+		if(containsDouble(temp, dix) && trump != null) score += 2 - 1;
 		
 		// Check Flags before processing Marriages. 
 		// Remove run cards if true to not count duplicates. (*Only Trump)
-		if(hasRun) {
+		if(hasRun && trump != null) {
 			if(hasDoubleRun) {
 				temp.removeAll(run); // will remove all trump cards
 			}
@@ -166,7 +168,7 @@ public class CalculateMeld {
 				break;
 			int i = queensInCards.indexOf(new Card(card.suit,Face.Queen));
 			if(i != -1) {
-				if(card.suit == trump && queensInCards.get(i).suit == trump) {
+				if(card.suit == trump && queensInCards.get(i).suit == trump && trump != null) {
 						score +=4;
 				}
 				else {

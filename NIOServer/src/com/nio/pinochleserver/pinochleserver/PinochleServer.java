@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.nio.pinochleserver.enums.GameResponse;
-import com.nio.pinochleserver.pinochlegames.FourHandedPinochle;
-import com.nio.pinochleserver.pinochlegames.PinochleGame;
+import com.nio.pinochleserver.pinochlegames.Pinochle;
 
 import naga.ConnectionAcceptor;
 import naga.NIOServerSocket;
@@ -81,6 +80,11 @@ public class PinochleServer implements ServerSocketObserver{
 			socket.listen(new PinochleServer(machine));
 			socket.setConnectionAcceptor(ConnectionAcceptor.ALLOW);
             machine.start();
+            
+            Scanner s = new Scanner(System.in);
+			s.nextLine();
+			s.close();
+			System.exit(0);
 		}
 		catch (IOException e)
 		{
@@ -98,7 +102,7 @@ public class PinochleServer implements ServerSocketObserver{
 		//private final static long LOGIN_TIMEOUT = 30 * 1000;
         private final static int INACTIVITY_TIMEOUT = 5 * 60 * 1000;
 		private List<NIOSocket> sockets;
-		private FourHandedPinochle pinochleGame;
+		private Pinochle pinochleGame;
         private DelayedEvent disconnectEvent;
         private PinochleServer server;
         private NIOSocket currentSocket;
@@ -106,7 +110,7 @@ public class PinochleServer implements ServerSocketObserver{
         private boolean gameOver = false;
 		
 		private Game(PinochleServer server) {
-			pinochleGame = new FourHandedPinochle();
+			pinochleGame = new Pinochle();
 			this.sockets = new ArrayList<NIOSocket>();
 			this.server = server;
 			currentSocket = null;
@@ -141,13 +145,8 @@ public class PinochleServer implements ServerSocketObserver{
 		
 		private boolean Play() {
 			//Broadcast until player response is needed
-			GameResponse g = pinochleGame.play(socketResponse);
+			GameResponse g = pinochleGame.Play(socketResponse);
 			currentSocket = null; socketResponse = null;
-			
-			if(pinochleGame.getCurrentResponse() == " ** GAMEOVER **") {
-				gameOver = true;
-				return false;
-			}
 			
 			switch(g) {
 			case Broadcast: broadcastGame(pinochleGame.getBroadcastResponse());
@@ -157,6 +156,8 @@ public class PinochleServer implements ServerSocketObserver{
 					scheduleInactivityEvent(currentSocket, pinochleGame.getCurrentResponse());
 				break;
 			case Pause:	broadcastGame(pinochleGame.getBroadcastResponse());
+				break;
+			case Gameover: gameOver = true;
 				break;
 			default:
 				break;
@@ -176,7 +177,6 @@ public class PinochleServer implements ServerSocketObserver{
 			} catch (Exception e) {
 			}
 			broadcast("Waiting for players ... (" + sockets.size() + " players)");
-            broadcast("GAME IS PAUSED");
             System.out.println("socket disconnected on port : " + socket.getPort());
             
 			if(sockets.size() == 0)
@@ -194,7 +194,6 @@ public class PinochleServer implements ServerSocketObserver{
             
             if(isFull()) {
             	broadcast("Waiting for players ... (" + sockets.size() + " players)");
-            	broadcast("GAME IS STARTING!");
             	drivePlay();
             }
             else {

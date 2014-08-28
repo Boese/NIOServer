@@ -9,6 +9,7 @@ import com.nio.pinochleserver.enums.CardComparator;
 import com.nio.pinochleserver.enums.Face;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
+import com.nio.pinochleserver.helperfunctions.CalculateMeld;
 
 import naga.NIOSocket;
 
@@ -136,13 +137,15 @@ public class Player {
 		return this.team;
 	}
 	
-	public boolean containsFiveNines() {
+	public boolean containsFiveNinesNoMeld() {
 		int numberOfNines = 0;
 		for (Card card : currentCards) {
 			if(card.face.equals(Face.Nine))
 				numberOfNines++;
 		}
 		
-		return (numberOfNines < 5 ? false : true);
+		if(numberOfNines >= 5 && new CalculateMeld(null, currentCards).calculate() == 0)
+			return true;
+		return false;
 	}
 }
