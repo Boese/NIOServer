@@ -13,9 +13,10 @@ import org.json.JSONObject;
 import naga.NIOSocket;
 
 import com.nio.pinochleserver.enums.Card;
+import com.nio.pinochleserver.enums.CardComparator;
 import com.nio.pinochleserver.enums.Face;
 import com.nio.pinochleserver.enums.GameResponse;
-import com.nio.pinochleserver.enums.Move;
+import com.nio.pinochleserver.enums.JSONConvert;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.CalculateMeld;
@@ -42,6 +43,7 @@ public class Pinochle implements iPinochleState {
 	private Position highestBidder = null;
 	private String playerResponse = "";
 	private List<String> broadcastResponse = new ArrayList<String>();
+	JSONConvert jConvert = new JSONConvert();
 	
 	//** iPinochleStates
 	private iPinochleState Start = new Start();
@@ -134,8 +136,11 @@ public class Pinochle implements iPinochleState {
 			// Deal out 12 cards to each player
 			int from = 0;
 			int to = 12;
+			CardComparator compare = new CardComparator();
 			for (Player player : players) {
-				player.setCards(deck.subList(from, to));
+				List<Card> cards = deck.subList(from, to);
+				cards.sort(compare);
+				player.setCards(cards);
 				from += 12;
 				to += 12;
 			}
@@ -166,11 +171,11 @@ public class Pinochle implements iPinochleState {
 				}
 				return GameResponse.Broadcast;
 			}
-			int move = 0;
+			
 			try {
-				if(response == null)
+				int move = jConvert.getBidFromJSON(response);
+				if(move == -1)
 					throw new JSONException("null");
-				move = response.getInt("bid");
 			
 				boolean result = bid(move);
 				if(result && highestBidder != null) {
@@ -193,8 +198,18 @@ public class Pinochle implements iPinochleState {
 				}
 				return GameResponse.Broadcast;
 				
-			}	catch (JSONException e) {} {
-				playerResponse = "CurrentBid: " + currentBid + "\n" + currentTurn + " bid :";
+			}	
+			catch (Exception e) { 
+				e.printStackTrace();
+			} {
+				JSONObject object = new JSONObject();
+				try {
+					object.put("type", "bid");
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				playerResponse = object.toString();
 				return GameResponse.Player;
 			}
 		}
@@ -298,11 +313,17 @@ public class Pinochle implements iPinochleState {
 			return GameResponse.Broadcast;
 		}
 		
-		private void passCards(Player from, Player to, List<Card> cards) {
-			List<Card> temp = to.addCardsToCurrent(cards);
-			to.setCards(temp);
-			temp = from.removeCardsFromCurrent(cards);
-			from.setCards(temp);
+		private boolean passCards(Player from, Player to, List<Card> cards) {
+			boolean result = false;
+			try {
+				if(cards.size() != 4)
+					throw new Exception("incorrect number of cards");
+				to.addCardsToCurrent(cards);
+				from.removeCardsFromCurrent(cards);
+				result = true;
+			}
+			catch(Exception e) {}
+			return result;
 		}
 		
 	}

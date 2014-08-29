@@ -16,6 +16,8 @@ import naga.packetwriter.AsciiLinePacketWriter;
 public class PinochleClient {
 	PinochleClient(){}
 	
+	static String response = "";
+	
 	public static void main(String[] args) {
 		try
         {
@@ -39,10 +41,16 @@ public class PinochleClient {
 							String temp = "";
 							while(!temp.equalsIgnoreCase("quit")) {
 				                temp = reader.readLine();
+				                JSONObject object = new JSONObject();
+				                object.put(response, Integer.parseInt(temp));
+				                temp = object.toString();
 				                socket.write(temp.getBytes());
 							}
 							System.exit(0);
 						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (JSONException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
@@ -73,18 +81,24 @@ public class PinochleClient {
                             {
                             	// Create the string. For real life scenarios, you'd handle exceptions here.
                                 String message = new String(packet).trim();
+                                response = "";
 								try {
 									JSONObject receive = new JSONObject(message);
 									switch(receive.getString("type")) {
 	                                case "card": message = "Need a card";
+	                                response = "card";
 	                                	break;
 	                                case "bid" : message = "Need a Bid";
+	                                response = "bid";
 	                                	break;
-	                                case "trump" : message = "Need to select trump";
+	                                case "suit" : message = "Need to select trump";
+	                                response = "suit";
 	                                	break;
-	                                case "passCards" : message = "Select 4 cards to pass";
+	                                case "cards" : message = "Select 4 cards to pass";
+	                                response = "cards";
 	                                	break;
-	                                case "print" : message = receive.getString("print");
+	                                case "print" : message = receive.getString("message");
+	                                	break;
 	                                }
 								} 
 								catch (JSONException e) {}
