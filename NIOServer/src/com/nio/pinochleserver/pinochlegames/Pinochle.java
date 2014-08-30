@@ -7,13 +7,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
+import naga.NIOSocket;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import naga.NIOSocket;
-
 import com.nio.pinochleserver.enums.Card;
-import com.nio.pinochleserver.enums.CardComparator;
 import com.nio.pinochleserver.enums.Face;
 import com.nio.pinochleserver.enums.GameResponse;
 import com.nio.pinochleserver.enums.JSONConvert;
@@ -23,7 +22,7 @@ import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.CalculateMeld;
 import com.nio.pinochleserver.player.Player;
 
-public class Pinochle implements iPinochleState {
+public class Pinochle {
 	
 	//** CONSTANTS **
 	private static final int scoreToWin = 150;
@@ -31,10 +30,11 @@ public class Pinochle implements iPinochleState {
 	private static final boolean trumpMarriageWorthDouble = true;
 	private static final boolean winByTakingBidOnly = true;
 	private static final boolean redeal5Nines = true;
+	private static final int numPlayers = 4;
 	//***************	
 	
 	//** Class Variables
-	private List<Player> players = new ArrayList<Player>(4);
+	private List<Player> players = new ArrayList<Player>(numPlayers);
 	private int team1Score = 0;
 	private int team2Score = 0;
 	private int currentBid = 0;
@@ -44,7 +44,7 @@ public class Pinochle implements iPinochleState {
 	private Position highestBidder = null;
 	private String playerResponse = "";
 	private List<String> broadcastResponse = new ArrayList<String>();
-	JSONConvert jConvert = new JSONConvert();
+	private JSONConvert jConvert = new JSONConvert();
 	
 	//** iPinochleStates
 	private iPinochleState Start = new Start();
@@ -55,36 +55,20 @@ public class Pinochle implements iPinochleState {
 	private iPinochleState Meld = new Meld();
 	private iPinochleState Pause = new Pause();
 	private iPinochleState Gameover = new Gameover();
-	//		iPinochleState PlayRound
+	private iPinochleState Round = new Round();
 	
 	//** Current iPinochleState
-	private iPinochleState currentState = Start;
+	protected iPinochleState currentState = Start;
 	
 	//** Default Constructor
 	public Pinochle() {}
 	
-	private void setAllPlayersJSON(Request request, String message) {
-		for (Player player : players) {
-			try {
-				player.setPlayerJSON(team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message);
-				broadcastResponse.add(player.getPlayerJSON().toString());
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	private void setPlayerJSON(Request request, String message) {
-		try {
-			getPlayer(currentTurn).setPlayerJSON(team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message);
-			playerResponse = getPlayer(currentTurn).getPlayerJSON().toString();
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
+	// Set current state
+	protected void setState(final iPinochleState state) {
+		this.currentState = state;
 	}
 	
 	//** Play function will call current state Play()
-	@Override
 	public GameResponse Play(JSONObject response) {
 		if(!gameFull())
 			setState(Pause);
@@ -93,22 +77,12 @@ public class Pinochle implements iPinochleState {
 		return currentState.Play(response);
 	}
 	
-	private void setState(final iPinochleState state) {
-		this.currentState = state;
-	}
+	//** Internal private iPinochleState classes
 	
-	// Get broadcast or player response
-	public String getCurrentResponse() {
-		return playerResponse;
-	}
-	
-	public List<String> getBroadcastResponse() {
-		return broadcastResponse;
-	}
-	
-	//** Internal private iPinochleState classes 
+	/*
+	 * Start State
+	 */
 	private class Start implements iPinochleState {
-
 		@Override
 		public GameResponse Play(JSONObject response) {
 			setState(Deal);
@@ -117,6 +91,9 @@ public class Pinochle implements iPinochleState {
 		}
 	}
 	
+	/*
+	 * Deal State
+	 */
 	private class Deal implements iPinochleState {
 		@Override
 		public GameResponse Play(JSONObject response) {
@@ -168,6 +145,9 @@ public class Pinochle implements iPinochleState {
 		}
 	}
 	
+	/*
+	 * Bid State
+	 */
 	private class Bid implements iPinochleState {
 		private List<Position> bidders;
 		private ListIterator<Position> biddersIterator;
@@ -261,6 +241,9 @@ public class Pinochle implements iPinochleState {
 		}
 	}
 	
+	/*
+	 * Trump State
+	 */
 	private class Trump implements iPinochleState {
 
 		@Override
@@ -278,6 +261,9 @@ public class Pinochle implements iPinochleState {
 		}
 	}
 	
+	/*
+	 * Pass State
+	 */
 	private class Pass implements iPinochleState {
 
 		@Override
@@ -304,6 +290,9 @@ public class Pinochle implements iPinochleState {
 		
 	}
 	
+	/*
+	 * Meld State
+	 */
 	private class Meld implements iPinochleState {
 
 		@Override
@@ -317,6 +306,9 @@ public class Pinochle implements iPinochleState {
 		
 	}
 	
+	/*
+	 * Pause State
+	 */
 	private class Pause implements iPinochleState {
 
 		@Override
@@ -329,6 +321,19 @@ public class Pinochle implements iPinochleState {
 		}
 	}
 	
+	/*
+	 * Round State
+	 */
+	private class Round implements iPinochleState {
+		@Override
+		public GameResponse Play(JSONObject response) {
+			return null;
+		}
+	}
+	
+	/*
+	 * Gameover State
+	 */
 	private class Gameover implements iPinochleState {
 
 		@Override
@@ -337,15 +342,25 @@ public class Pinochle implements iPinochleState {
 		}
 	}
 	
-	//** Helper Methods
-	public String createJsonMessage(String type, String request) {
-		JSONObject message = new JSONObject();
+	// Private Helper methods
+	private void setAllPlayersJSON(Request request, String message) {
+		for (Player player : players) {
+			try {
+				player.setPlayerJSON(team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message);
+				broadcastResponse.add(player.getPlayerJSON().toString());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void setPlayerJSON(Request request, String message) {
 		try {
-			message.put(type, request);
+			getPlayer(currentTurn).setPlayerJSON(team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message);
+			playerResponse = getPlayer(currentTurn).getPlayerJSON().toString();
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		return message.toString();
 	}
 		
 	private Position findNextAvailablePosition() {
@@ -360,21 +375,22 @@ public class Pinochle implements iPinochleState {
 		return availPositions.get(0);
 	}
 		
+	// Public Helper methods
 	public void addPlayer(NIOSocket socket) throws Exception {
 		Position position = findNextAvailablePosition();
 		int teamNum = 1;
 		if(position.equals(Position.East) || position.equals(Position.West))
 			teamNum = 2;
 		Player p = new Player(position,teamNum,socket);
-		if(this.players.size() <= 3)
-			this.players.add(p);
+		if(players.size() <= 3)
+			players.add(p);
 		else
 			throw new Exception("FourHandedPinochle Full");
 	}
 		
 	public boolean removePlayer(NIOSocket socket) throws Exception {
 		boolean success = false;
-		if(this.players.size() > 0) {
+		if(players.size() > 0) {
 			for (Player player : players) {
 				if(player.getSocket() == socket) {
 					success = true;
@@ -406,7 +422,7 @@ public class Pinochle implements iPinochleState {
 		
 	public boolean gameFull() {
 		boolean full = false;
-		if(players.size() == 4) {
+		if(players.size() == numPlayers) {
 			full = true;
 		}
 		return full;
@@ -414,5 +430,14 @@ public class Pinochle implements iPinochleState {
 	
 	public NIOSocket getCurrentSocket() {
 		return getPlayer(currentTurn).getSocket();
+	}
+	
+	// Get broadcast or player response
+	public String getCurrentResponse() {
+		return playerResponse;
+	}
+	
+	public List<String> getBroadcastResponse() {
+		return broadcastResponse;
 	}
 }
