@@ -4,10 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.CardComparator;
 import com.nio.pinochleserver.enums.Face;
+import com.nio.pinochleserver.enums.JSONConvert;
 import com.nio.pinochleserver.enums.Position;
+import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.CalculateMeld;
 
@@ -17,19 +22,35 @@ public class Player {
 	private Position position; // enum position
 	private int team; //team 1 or team 2
 	private List<Card> currentCards; //current cards List<enum cards>
-	private int currentMeld; //current meld score for player
-	private int currentBid;
 	private Position teamMate;
+	private JSONObject playerJSON;
+	private JSONConvert jConvert = new JSONConvert();
 
 	private NIOSocket socket;
+	
+	public void setPlayerJSON(int team1Score, int team2Score, Suit currentTrump, int bid, Position turn, Request request, String message) throws JSONException {
+		playerJSON = new JSONObject();
+		JSONObject scoreArray = new JSONObject();
+		scoreArray.put("Our Team", team1Score);
+		scoreArray.put("Their Team", team2Score);
+		playerJSON.put("Score", scoreArray);
+		playerJSON.put("Bid", bid);
+		playerJSON.put("trump",	currentTrump);
+		playerJSON.put("Current Turn", turn);
+		playerJSON.put("My Cards", jConvert.convertCardsToJSON(currentCards));
+		playerJSON.put("request", request);
+		playerJSON.put("message", message);
+	}
+	
+	public JSONObject getPlayerJSON() {
+		return playerJSON;
+	}
 	
 	public Player(Position position, int team, NIOSocket socket) {
 		this.position=position;
 		this.teamMate = position.getNext(2);
 		this.team = team;
 		this.currentCards = new ArrayList<Card>();
-		this.currentMeld = 0;
-		this.currentBid = 0;
 		this.socket = socket;
 	}
 	
@@ -105,24 +126,9 @@ public class Player {
 		return this.socket;
 	}
 	
-	public void setBid(int bid) {
-		this.currentBid = bid;
-	}
-	
-	public int getBid() {
-		return this.currentBid;
-	}
-	
-	public void setMeld(int meld) {
-		this.currentMeld = meld;
-	}
-	
 	public void setCards(List<Card> newCards) {
 		this.currentCards = newCards;
-	}
-	
-	public int getCurrentMeld() {
-		return this.currentMeld;
+		this.currentCards.sort(new CardComparator());
 	}
 	
 	public List<Card> getCurrentCards() {

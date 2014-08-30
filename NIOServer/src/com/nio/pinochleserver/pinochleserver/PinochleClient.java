@@ -1,11 +1,16 @@
 package com.nio.pinochleserver.pinochleserver;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.nio.pinochleserver.enums.Card;
+import com.nio.pinochleserver.enums.JSONConvert;
+import com.nio.pinochleserver.enums.Request;
+import com.nio.pinochleserver.enums.Suit;
 
 import naga.NIOService;
 import naga.NIOSocket;
@@ -16,7 +21,66 @@ import naga.packetwriter.AsciiLinePacketWriter;
 public class PinochleClient {
 	PinochleClient(){}
 	
-	static String response = "";
+	private static Request request = Request.Null;
+	private static List<Card> cards = new ArrayList<Card>();
+	private static JSONConvert jConvert = new JSONConvert();
+	private static NIOSocket socket = null;
+	
+	private static void requestNeeded() {
+		//Start new thread to capture input. Write to NIOSocket
+		BufferedReader s = new BufferedReader(new InputStreamReader(System.in));
+        Thread t = new Thread() {
+
+			@Override
+			public void run() {
+		                try{
+		                	JSONObject object = new JSONObject();
+		                		switch(request) {
+		                		case Card:
+		                			int x = Integer.parseInt(s.readLine());
+		                			x++;
+		                			Card card = cards.get(x);
+		                			object = jConvert.convertCardToJSON(card);
+		                			socket.write(object.toString().getBytes());
+		                			break;
+								case Bid:
+									int bid = Integer.parseInt(s.readLine());
+									object = jConvert.convertBidToJSON(bid);
+									socket.write(object.toString().getBytes());
+									break;
+								case Cards: 
+									List<Card> tempCards = new ArrayList<Card>();
+									int a = Integer.parseInt(s.readLine());
+									int b = Integer.parseInt(s.readLine());
+									int c = Integer.parseInt(s.readLine());
+									int d = Integer.parseInt(s.readLine());
+									a++;b++;c++;d++;
+									tempCards.add(cards.get(a));
+									tempCards.add(cards.get(b));
+									tempCards.add(cards.get(c));
+									tempCards.add(cards.get(d));
+									object = jConvert.convertCardsToJSON(tempCards);
+									socket.write(object.toString().getBytes());
+									break;
+								case Null:
+									break;
+								case Trump: 
+									Suit trump = Suit.Clubs.getNext(Integer.parseInt(s.readLine()));
+									object = jConvert.convertTrumpToJSON(trump);
+									socket.write(object.toString().getBytes());
+									break;
+								default:
+									break;
+		                	}
+		                }
+		                catch(Exception e) {
+		                	e.printStackTrace();
+		                }
+			}
+        	
+        };
+        t.start();
+	}
 	
 	public static void main(String[] args) {
 		try
@@ -25,42 +89,12 @@ public class PinochleClient {
                 NIOService service = new NIOService();
 
                 // Open our socket.
-                NIOSocket socket = service.openSocket("localhost", 5218);
+                socket = service.openSocket("localhost", 5218);
 
                 // Use regular 1 byte header reader/writer
                 socket.setPacketReader(new AsciiLinePacketReader());
                 socket.setPacketWriter(new AsciiLinePacketWriter());
                 
-                //Start new thread to capture input. Write to NIOSocket
-                Thread t = new Thread() {
-
-					@Override
-					public void run() {
-						BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-						try {
-							String temp = "";
-							while(!temp.equalsIgnoreCase("quit")) {
-				                temp = reader.readLine();
-				                JSONObject object = new JSONObject();
-				                object.put(response, Integer.parseInt(temp));
-				                temp = object.toString();
-				                socket.write(temp.getBytes());
-							}
-							System.exit(0);
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (JSONException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						super.run();
-					}
-                	
-                };
-                t.start();
-                
-
                 // Start listening to the socket.
                 socket.listen(new SocketObserver()
                 {
@@ -79,33 +113,33 @@ public class PinochleClient {
                     {
                             try
                             {
-                            	// Create the string. For real life scenarios, you'd handle exceptions here.
                                 String message = new String(packet).trim();
-                                response = "";
-								try {
-									JSONObject receive = new JSONObject(message);
-									switch(receive.getString("type")) {
-	                                case "card": message = "Need a card";
-	                                response = "card";
-	                                	break;
-	                                case "bid" : message = "Need a Bid";
-	                                response = "bid";
-	                                	break;
-	                                case "suit" : message = "Need to select trump";
-	                                response = "suit";
-	                                	break;
-	                                case "cards" : message = "Select 4 cards to pass";
-	                                response = "cards";
-	                                	break;
-	                                case "print" : message = receive.getString("message");
-	                                	break;
+	                                try {
+	                                	JSONObject j = new JSONObject(message);
+	                                	request = Request.valueOf(j.optString("request"));
+	                                	cards = jConvert.getCardsFromJSON(j.optJSONObject("My Cards"));
+		                                	switch(request) {
+					                		case Card: System.out.println("Enter Card (1-4):");
+					                		requestNeeded();
+					                			break;
+											case Bid: System.out.println("Enter Bid :");
+											requestNeeded();
+												break;
+											case Cards: System.out.println("Enter Cards (1-12),(1-12),(1-12),(1-12):");
+											requestNeeded();
+												break;
+											case Null: System.out.println(j.optString("message"));
+												break;
+											case Trump: System.out.println("Enter Trump (1-4):");
+											requestNeeded();
+												break;
+											default:
+												break;
+					                	}
 	                                }
-								} 
-								catch (JSONException e) {}
-                                
-                                System.out.println(message);
-                                // Ignore empty lines
-                                if (message.length() == 0) return;
+	                                catch(Exception e) {
+	                                	System.out.println(message);
+	                                }
                             }
                             catch (Exception e)
                             {

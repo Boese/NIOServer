@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.nio.pinochleserver.enums.GameResponse;
@@ -222,7 +223,12 @@ public class PinochleServer implements ServerSocketObserver{
 		public void packetReceived(NIOSocket socket, byte[] packet) {
 			if(currentSocket == socket) {
 				if (disconnectEvent != null) disconnectEvent.cancel(); 
-				socketResponse = new JSONObject(packet);
+				String temp = new String(packet).trim();
+				try {
+					socketResponse = new JSONObject(temp);
+				} catch (JSONException e1) {
+					e1.printStackTrace();
+				}
 				currentSocket = null;
 				drivePlay();
 			}

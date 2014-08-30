@@ -53,11 +53,19 @@ public class JSONConvert {
 	}
 	
 	public int getBidFromJSON(JSONObject object) {
-		return object.optInt("bid", -1);
+		int bid = -1;
+		try {
+			bid = object.optInt("bid", -1);
+		}catch(Exception e) {}
+		return bid;
 	}
 	
 	public Suit getTrumpFromJSON(JSONObject object) {
-		return Suit.valueOf(object.optString("suit", null));
+		Suit suit = null;
+		try {
+			suit = Suit.valueOf(object.optString("suit", null));
+		}catch(Exception e) {}
+		return suit;
 	}
 	
 	/*

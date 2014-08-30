@@ -18,6 +18,7 @@ import com.nio.pinochleserver.enums.Face;
 import com.nio.pinochleserver.enums.GameResponse;
 import com.nio.pinochleserver.enums.JSONConvert;
 import com.nio.pinochleserver.enums.Position;
+import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.CalculateMeld;
 import com.nio.pinochleserver.player.Player;
@@ -62,6 +63,26 @@ public class Pinochle implements iPinochleState {
 	//** Default Constructor
 	public Pinochle() {}
 	
+	private void setAllPlayersJSON(Request request, String message) {
+		for (Player player : players) {
+			try {
+				player.setPlayerJSON(team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message);
+				broadcastResponse.add(player.getPlayerJSON().toString());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void setPlayerJSON(Request request, String message) {
+		try {
+			getPlayer(currentTurn).setPlayerJSON(team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message);
+			playerResponse = getPlayer(currentTurn).getPlayerJSON().toString();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	//** Play function will call current state Play()
 	@Override
 	public GameResponse Play(JSONObject response) {
@@ -91,9 +112,7 @@ public class Pinochle implements iPinochleState {
 		@Override
 		public GameResponse Play(JSONObject response) {
 			setState(Deal);
-			for (int i=0;i<4;i++) {
-				broadcastResponse.add("Starting Game!\n");
-			}
+			setAllPlayersJSON(Request.Null, "Starting Game!");
 			return GameResponse.Broadcast;
 		}
 	}
@@ -102,16 +121,12 @@ public class Pinochle implements iPinochleState {
 		@Override
 		public GameResponse Play(JSONObject response) {
 			deal();
-			for (Player player : players) {
-				broadcastResponse.add(player.toCardString());
-			}
+			setAllPlayersJSON(Request.Null, "Dealing...");
 			if(!checkForNines()) {
 				setState(Bid);
 			}
 			else {
-				for (int i=0;i<4;i++) {
-					broadcastResponse.add("5 Nines redeal");
-				}
+				setAllPlayersJSON(Request.Null, "Dealing... One Player got 5 Nines and no meld!");
 			}
 			return GameResponse.Broadcast;
 		}
@@ -136,11 +151,8 @@ public class Pinochle implements iPinochleState {
 			// Deal out 12 cards to each player
 			int from = 0;
 			int to = 12;
-			CardComparator compare = new CardComparator();
 			for (Player player : players) {
-				List<Card> cards = deck.subList(from, to);
-				cards.sort(compare);
-				player.setCards(cards);
+				player.setCards(deck.subList(from, to));
 				from += 12;
 				to += 12;
 			}
@@ -166,52 +178,30 @@ public class Pinochle implements iPinochleState {
 			if(startBid) {
 				startBid(); 
 				startBid = false;
-				for (int i=0;i<4;i++) {
-					broadcastResponse.add("Starting Bidding Round with : " + currentTurn);
-				}
+				setAllPlayersJSON(Request.Null, "Starting bidding round with : " + currentTurn);
 				return GameResponse.Broadcast;
 			}
 			
-			try {
-				int move = jConvert.getBidFromJSON(response);
-				if(move == -1)
-					throw new JSONException("null");
-			
+			int move = jConvert.getBidFromJSON(response);
+			if(move != -1)
+			{
 				boolean result = bid(move);
 				if(result && highestBidder != null) {
 					startBid = true;
 					setState(Trump);
-					for(int i=0;i<4;i++) {
-						int num = i+1;
-						playerResponse += "\t" + Suit.Hearts.getNext(i) + " - " + num;
+					setAllPlayersJSON(Request.Null, "Selecting Trump...");
+					return GameResponse.Broadcast;
+				}
+		
+				if(result && highestBidder == null) {
+						startBid = true;
+						setState(Deal);
+						setAllPlayersJSON(Request.Null, "Everyone passed! Redeal...");
+						return GameResponse.Broadcast;
 					}
-					playerResponse += "\n\nSelect trump (1-4) : ";
-					return GameResponse.Player;
-				}
-			
-			if(result && highestBidder == null) {
-					startBid = true;
-					setState(Deal);
-					for (int i=0;i<4;i++) {
-						broadcastResponse.add("everyone passed redeal");
-					}
-				}
-				return GameResponse.Broadcast;
-				
-			}	
-			catch (Exception e) { 
-				e.printStackTrace();
-			} {
-				JSONObject object = new JSONObject();
-				try {
-					object.put("type", "bid");
-				} catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				playerResponse = object.toString();
-				return GameResponse.Player;
 			}
+			setPlayerJSON(Request.Bid, null);
+			return GameResponse.Player;
 		}
 		
 		private void incTurn() {
@@ -238,7 +228,7 @@ public class Pinochle implements iPinochleState {
 			// bidder bid
 			else if(bid > currentBid) {
 				currentBid = bid;
-				getPlayer(currentPosition).setBid(bid);
+				//getPlayer(currentPosition).setBid(bid);
 				highestBidder = currentPosition;
 			}
 			// bid not high enough prompt again
@@ -275,30 +265,16 @@ public class Pinochle implements iPinochleState {
 
 		@Override
 		public GameResponse Play(JSONObject response) {
-			String move = null;
-			try {
-				move = response.getString("bid");
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			int selection = Integer.parseInt(move);
-			if(selection > 0 && selection < 5) {
-				currentTrump = (Suit.Hearts.getNext(selection-1));
-				setState(Pass);
-				for (int i=0;i<4;i++) {
-					broadcastResponse.add("Trump is " + currentTrump);
-				}
-				return GameResponse.Broadcast;
-			}
-			else {
-				for(int i=0;i<4;i++) {
-					int num = i+1;
-					playerResponse += "\t" + Suit.Hearts.getNext(i) + " - " + num + "\n";
-				}
-				playerResponse += "\n\nSelect trump (1-4) : ";
+			Suit move = null;
+			move = jConvert.getTrumpFromJSON(response);
+			if(move == null) {
+				setPlayerJSON(Request.Trump, null);
 				return GameResponse.Player;
 			}
+			currentTrump = move;
+			setState(Pass);
+			setAllPlayersJSON(Request.Null, "Trump is " + currentTrump);
+			return GameResponse.Broadcast;
 		}
 	}
 	
