@@ -38,6 +38,16 @@ public class PinochleServer implements ServerSocketObserver{
 
 	@Override
 	public void newConnection(NIOSocket socket) {
+		
+		/*
+		 * Authenticate Login
+		 * Pass Socket to login class
+		 * Once authenticated pass encrypted key onto device
+		 * Player can then login with key for 24 hours
+		 * Login class will will for user to start game
+		 * When user starts game it is passed to Game class
+		 * 
+		 */
 		boolean allGamesFull = true;
 		for (Game game : currentGames) {
 			if(!game.isFull()) {
@@ -84,6 +94,7 @@ public class PinochleServer implements ServerSocketObserver{
 			socket.setConnectionAcceptor(ConnectionAcceptor.ALLOW);
             machine.start();
             
+            // Stop Server when user presses any key
             Scanner s = new Scanner(System.in);
 			s.nextLine();
 			s.close();
