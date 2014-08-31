@@ -116,8 +116,13 @@ public class PinochleClient {
                                 String message = new String(packet).trim();
 	                                try {
 	                                	JSONObject j = new JSONObject(message);
+	                                	//System.out.println(j.toString());
 	                                	request = Request.valueOf(j.optString("request"));
-	                                	cards = jConvert.getCardsFromJSON(j.optJSONObject("My Cards"));
+	                                	if(!cards.containsAll(jConvert.getCardsFromJSON(j.optJSONObject("My Cards")))) {
+	                                		cards = jConvert.getCardsFromJSON(j.optJSONObject("My Cards"));
+	                                		System.out.println(cards);
+	                                	}
+	                                	
 		                                	switch(request) {
 					                		case Card: System.out.println("Enter Card (1-4):");
 					                		requestNeeded();

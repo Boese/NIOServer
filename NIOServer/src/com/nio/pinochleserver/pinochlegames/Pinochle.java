@@ -45,6 +45,7 @@ public class Pinochle {
 	private String playerResponse = "";
 	private List<String> broadcastResponse = new ArrayList<String>();
 	private JSONConvert jConvert = new JSONConvert();
+	private Object lastMove = new Object();
 	
 	//** iPinochleStates
 	private iPinochleState Start = new Start();
@@ -165,6 +166,7 @@ public class Pinochle {
 			int move = jConvert.getBidFromJSON(response);
 			if(move != -1)
 			{
+				lastMove = move;
 				boolean result = bid(move);
 				if(result && highestBidder != null) {
 					startBid = true;
@@ -255,6 +257,7 @@ public class Pinochle {
 				return GameResponse.Player;
 			}
 			currentTrump = move;
+			lastMove = move;
 			setState(Pass);
 			setAllPlayersJSON(Request.Null, "Trump is " + currentTrump);
 			return GameResponse.Broadcast;
@@ -269,9 +272,7 @@ public class Pinochle {
 		@Override
 		public GameResponse Play(JSONObject response) {
 			setState(Meld);
-			for (int i=0;i<4;i++) {
-				broadcastResponse.add("** PASSING CARDS **");
-			}
+			setAllPlayersJSON(Request.Null, "*** PASSING CARDS ***");
 			return GameResponse.Broadcast;
 		}
 		
@@ -346,7 +347,7 @@ public class Pinochle {
 	private void setAllPlayersJSON(Request request, String message) {
 		for (Player player : players) {
 			try {
-				player.setPlayerJSON(team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message);
+				player.setPlayerJSON(players, team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message,lastMove);
 				broadcastResponse.add(player.getPlayerJSON().toString());
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -356,7 +357,7 @@ public class Pinochle {
 	
 	private void setPlayerJSON(Request request, String message) {
 		try {
-			getPlayer(currentTurn).setPlayerJSON(team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message);
+			getPlayer(currentTurn).setPlayerJSON(players, team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message,lastMove);
 			playerResponse = getPlayer(currentTurn).getPlayerJSON().toString();
 		} catch (JSONException e) {
 			e.printStackTrace();

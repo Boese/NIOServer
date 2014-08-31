@@ -28,18 +28,26 @@ public class Player {
 
 	private NIOSocket socket;
 	
-	public void setPlayerJSON(int team1Score, int team2Score, Suit currentTrump, int bid, Position turn, Request request, String message) throws JSONException {
+	public void setPlayerJSON(List<Player> players, int team1Score, int team2Score, Suit currentTrump, int currentBid, Position currentTurn, Request request, String message, Object move) throws JSONException {
 		playerJSON = new JSONObject();
 		JSONObject scoreArray = new JSONObject();
-		scoreArray.put("Our Team", team1Score);
-		scoreArray.put("Their Team", team2Score);
+		JSONObject playersMeldArray = new JSONObject();
+		for (Player player : players) {
+			int x = new CalculateMeld(currentTrump, player.getCurrentCards()).calculate();
+			playersMeldArray.put("Player : " + player.getPosition(), x);
+		}
+		scoreArray.put("team1Score", team1Score);
+		scoreArray.put("team2Score", team2Score);
+		playerJSON.put("Meld", playersMeldArray);
 		playerJSON.put("Score", scoreArray);
-		playerJSON.put("Bid", bid);
+		playerJSON.put("team", team);
+		playerJSON.put("Bid", currentBid);
 		playerJSON.put("trump",	currentTrump);
-		playerJSON.put("Current Turn", turn);
+		playerJSON.put("Current Turn", currentTurn);
 		playerJSON.put("My Cards", jConvert.convertCardsToJSON(currentCards));
 		playerJSON.put("request", request);
 		playerJSON.put("message", message);
+		playerJSON.put("LastMove", move);
 	}
 	
 	public JSONObject getPlayerJSON() {
