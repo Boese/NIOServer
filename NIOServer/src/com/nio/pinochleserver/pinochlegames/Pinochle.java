@@ -43,7 +43,6 @@ public class Pinochle {
 	private Suit currentTrump = null;
 	private Position highestBidder = null;
 	private String playerResponse = "";
-	private List<String> broadcastResponse = new ArrayList<String>();
 	private JSONConvert jConvert = new JSONConvert();
 	private Object lastMove = new Object();
 	
@@ -73,7 +72,6 @@ public class Pinochle {
 	public GameResponse Play(JSONObject response) {
 		if(!gameFull())
 			setState(Pause);
-		broadcastResponse.clear();	//Clear out broadcast list
 		playerResponse = "";	//Clear out playerResponse
 		return currentState.Play(response);
 	}
@@ -298,9 +296,6 @@ public class Pinochle {
 
 		@Override
 		public GameResponse Play(JSONObject response) {
-			for (Player player : players) {
-				broadcastResponse.add("Meld : " + new CalculateMeld(currentTrump, player.getCurrentCards()).calculate());
-			}
 			setState(Gameover);
 			return GameResponse.Broadcast;
 		}
@@ -314,9 +309,7 @@ public class Pinochle {
 
 		@Override
 		public GameResponse Play(JSONObject response) {
-			for (int i=0;i<4;i++) {
-				broadcastResponse.add("Round is restarting because a player left");
-			}
+			setAllPlayersJSON(Request.Null, "Round is restarting because a player left");
 			setState(Start);
 			return GameResponse.Pause;
 		}
@@ -348,7 +341,6 @@ public class Pinochle {
 		for (Player player : players) {
 			try {
 				player.setPlayerJSON(players, team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message,lastMove);
-				broadcastResponse.add(player.getPlayerJSON().toString());
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -411,6 +403,15 @@ public class Pinochle {
 		}
 		return tempPlayer;
 	}
+	
+	public Player getPlayer(NIOSocket socket) {
+		Player tempPlayer = null;
+		for (Player player : players) {
+			if(player.getSocket() == socket)
+				tempPlayer = player;
+		}
+		return tempPlayer;
+	}
 		
 	public Position getPosition(NIOSocket socket) {
 		Position tempPosition = null;
@@ -433,12 +434,16 @@ public class Pinochle {
 		return getPlayer(currentTurn).getSocket();
 	}
 	
+	public JSONObject getPlayerJSON(NIOSocket socket) {
+		return getPlayer(socket).getPlayerJSON();
+	}
+	
+	public List<Player> getPlayer() {
+		return this.players;
+	}
+	
 	// Get broadcast or player response
 	public String getCurrentResponse() {
 		return playerResponse;
-	}
-	
-	public List<String> getBroadcastResponse() {
-		return broadcastResponse;
 	}
 }

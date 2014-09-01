@@ -131,20 +131,12 @@ public class PinochleServer implements ServerSocketObserver{
 			socketResponse = null;
 		}
 		
-		private void broadcastGame(List<String> messages) {
-			if(messages.contains("") || messages.contains(null) || messages.isEmpty())
-				return;
-			
-			int i = 0;
-			for (NIOSocket nioSocket : sockets) {
-				nioSocket.write(messages.get(i).getBytes());
-				i++;
+		private void broadcastGame() {
+			for (NIOSocket socket : sockets) {
+				socket.write(pinochleGame.getPlayerJSON(socket).toString().getBytes());
 			}
 		}
 		private void broadcast(String message) {
-			if(message.equalsIgnoreCase("") || message == null)
-				return;
-			
 			for (NIOSocket nioSocket : sockets) {
 				nioSocket.write(message.getBytes());
 			}
@@ -163,13 +155,13 @@ public class PinochleServer implements ServerSocketObserver{
 			currentSocket = null; socketResponse = null;
 			
 			switch(g) {
-			case Broadcast: broadcastGame(pinochleGame.getBroadcastResponse());
+			case Broadcast: 
+			case Pause: 
+				broadcastGame();
 				break;
 			case Player:
 					currentSocket = pinochleGame.getCurrentSocket();
 					scheduleInactivityEvent(currentSocket, pinochleGame.getCurrentResponse());
-				break;
-			case Pause:	broadcastGame(pinochleGame.getBroadcastResponse());
 				break;
 			case Gameover: gameOver = true;
 				break;
