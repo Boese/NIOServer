@@ -4,15 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.CardComparator;
 import com.nio.pinochleserver.enums.Face;
-import com.nio.pinochleserver.enums.JSONConvert;
 import com.nio.pinochleserver.enums.Position;
-import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.CalculateMeld;
 
@@ -23,36 +18,8 @@ public class Player {
 	private int team; //team 1 or team 2
 	private List<Card> currentCards; //current cards List<enum cards>
 	private Position teamMate;
-	private JSONObject playerJSON;
-	private JSONConvert jConvert = new JSONConvert();
 
 	private NIOSocket socket;
-	
-	public void setPlayerJSON(List<Player> players, int team1Score, int team2Score, Suit currentTrump, int currentBid, Position currentTurn, Request request, String message, Object move) throws JSONException {
-		playerJSON = new JSONObject();
-		JSONObject scoreArray = new JSONObject();
-		JSONObject playersMeldArray = new JSONObject();
-		for (Player player : players) {
-			int x = new CalculateMeld(currentTrump, player.getCurrentCards()).calculate();
-			playersMeldArray.put("Player : " + player.getPosition(), x);
-		}
-		scoreArray.put("team1Score", team1Score);
-		scoreArray.put("team2Score", team2Score);
-		playerJSON.put("Meld", playersMeldArray);
-		playerJSON.put("Score", scoreArray);
-		playerJSON.put("team", team);
-		playerJSON.put("Bid", currentBid);
-		playerJSON.put("trump",	currentTrump);
-		playerJSON.put("Current Turn", currentTurn);
-		playerJSON.put("My Cards", jConvert.convertCardsToJSON(currentCards));
-		playerJSON.put("request", request);
-		playerJSON.put("message", message);
-		playerJSON.put("LastMove", move);
-	}
-	
-	public JSONObject getPlayerJSON() {
-		return playerJSON;
-	}
 	
 	public Player(Position position, int team, NIOSocket socket) {
 		this.position=position;

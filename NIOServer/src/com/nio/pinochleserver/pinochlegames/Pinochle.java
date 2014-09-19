@@ -22,29 +22,21 @@ import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.CalculateMeld;
 import com.nio.pinochleserver.player.Player;
 
-public class Pinochle {
-	
-	//** CONSTANTS **
-	private static final int scoreToWin = 150;
-	private static final boolean subtractScoreIfLose = true;
-	private static final boolean trumpMarriageWorthDouble = true;
-	private static final boolean winByTakingBidOnly = true;
-	private static final boolean redeal5Nines = true;
-	private static final int numPlayers = 4;
-	//***************	
+public class Pinochle implements PinochleGameSubject{
 	
 	//** Class Variables
-	private List<Player> players = new ArrayList<Player>(numPlayers);
-	private int team1Score = 0;
-	private int team2Score = 0;
-	private int currentBid = 0;
-	private Position currentTurn = Position.North;
-	private Position bidTurn = Position.North;
-	private Suit currentTrump = null;
-	private Position highestBidder = null;
-	private String playerResponse = "";
-	private JSONConvert jConvert = new JSONConvert();
-	private Object lastMove = new Object();
+	protected List<Player> players = new ArrayList<Player>(4);
+	protected int team1Score = 0;
+	protected int team2Score = 0;
+	protected int currentBid = 0;
+	protected Position currentTurn = Position.North;
+	protected Position bidTurn = Position.North;
+	protected Suit currentTrump = null;
+	protected Position highestBidder = null;
+	protected Request currentRequest = Request.Null;
+	protected JSONConvert jConvert = new JSONConvert();
+	protected Object lastMove = new Object();
+	protected String currentMessage = "";
 	
 	//** iPinochleStates
 	private iPinochleState Start = new Start();
@@ -57,11 +49,17 @@ public class Pinochle {
 	private iPinochleState Gameover = new Gameover();
 	private iPinochleState Round = new Round();
 	
+	//** Observers
+	private List<PinochleGameObserver> pinochleGameObservers = new ArrayList<PinochleGameObserver>();
+	public PinochleMessage pinochleMessage = new PinochleMessage();
+	
 	//** Current iPinochleState
 	protected iPinochleState currentState = Start;
 	
 	//** Default Constructor
-	public Pinochle() {}
+	public Pinochle() {
+		registerObserver(pinochleMessage);
+	}
 	
 	// Set current state
 	protected void setState(final iPinochleState state) {
@@ -72,8 +70,9 @@ public class Pinochle {
 	public GameResponse Play(JSONObject response) {
 		if(!gameFull())
 			setState(Pause);
-		playerResponse = "";	//Clear out playerResponse
-		return currentState.Play(response);
+		GameResponse gameresponse = currentState.Play(response);
+		notifyObservers();
+		return gameresponse;
 	}
 	
 	//** Internal private iPinochleState classes
@@ -85,7 +84,7 @@ public class Pinochle {
 		@Override
 		public GameResponse Play(JSONObject response) {
 			setState(Deal);
-			setAllPlayersJSON(Request.Null, "Starting Game!");
+			currentMessage = "Starting Game!";
 			return GameResponse.Broadcast;
 		}
 	}
@@ -97,12 +96,12 @@ public class Pinochle {
 		@Override
 		public GameResponse Play(JSONObject response) {
 			deal();
-			setAllPlayersJSON(Request.Null, "Dealing...");
+			currentMessage = "Dealing...";
 			if(!checkForNines()) {
 				setState(Bid);
 			}
 			else {
-				setAllPlayersJSON(Request.Null, "Dealing... One Player got 5 Nines and no meld!");
+				currentMessage += "\nRe-dealing... One Player got 5 Nines and no meld!";
 			}
 			return GameResponse.Broadcast;
 		}
@@ -157,10 +156,10 @@ public class Pinochle {
 			if(startBid) {
 				startBid(); 
 				startBid = false;
-				setAllPlayersJSON(Request.Null, "Starting bidding round with : " + currentTurn);
+				currentMessage = "Starting bidding round with : " + currentTurn;
 				return GameResponse.Broadcast;
 			}
-			
+
 			int move = jConvert.getBidFromJSON(response);
 			if(move != -1)
 			{
@@ -169,18 +168,19 @@ public class Pinochle {
 				if(result && highestBidder != null) {
 					startBid = true;
 					setState(Trump);
-					setAllPlayersJSON(Request.Null, "Selecting Trump...");
+					currentMessage = "Selecting Trump...";
 					return GameResponse.Broadcast;
 				}
 		
 				if(result && highestBidder == null) {
 						startBid = true;
 						setState(Deal);
-						setAllPlayersJSON(Request.Null, "Everyone passed! Redeal...");
+						currentMessage = "Everyone passed! Redeal...";
 						return GameResponse.Broadcast;
 					}
 			}
-			setPlayerJSON(Request.Bid, null);
+			currentMessage = "CurrentBid : " + currentBid;
+			currentRequest = Request.Bid;
 			return GameResponse.Player;
 		}
 		
@@ -251,13 +251,14 @@ public class Pinochle {
 			Suit move = null;
 			move = jConvert.getTrumpFromJSON(response);
 			if(move == null) {
-				setPlayerJSON(Request.Trump, null);
+				currentMessage = "";
+				currentRequest = Request.Trump;
 				return GameResponse.Player;
 			}
 			currentTrump = move;
 			lastMove = move;
 			setState(Pass);
-			setAllPlayersJSON(Request.Null, "Trump is " + currentTrump);
+			currentMessage = "Trump is " + currentTrump;
 			return GameResponse.Broadcast;
 		}
 	}
@@ -270,7 +271,7 @@ public class Pinochle {
 		@Override
 		public GameResponse Play(JSONObject response) {
 			setState(Meld);
-			setAllPlayersJSON(Request.Null, "*** PASSING CARDS ***");
+			currentMessage = "*** PASSING CARDS ***";
 			return GameResponse.Broadcast;
 		}
 		
@@ -309,9 +310,9 @@ public class Pinochle {
 
 		@Override
 		public GameResponse Play(JSONObject response) {
-			setAllPlayersJSON(Request.Null, "Round is restarting because a player left");
+			currentMessage = "Round is restarting because a player left";
 			setState(Start);
-			return GameResponse.Pause;
+			return GameResponse.Broadcast;
 		}
 	}
 	
@@ -333,26 +334,6 @@ public class Pinochle {
 		@Override
 		public GameResponse Play(JSONObject response) {
 			return GameResponse.Gameover;
-		}
-	}
-	
-	// Private Helper methods
-	private void setAllPlayersJSON(Request request, String message) {
-		for (Player player : players) {
-			try {
-				player.setPlayerJSON(players, team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message,lastMove);
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	private void setPlayerJSON(Request request, String message) {
-		try {
-			getPlayer(currentTurn).setPlayerJSON(players, team1Score,team2Score,currentTrump,currentBid,currentTurn,request,message,lastMove);
-			playerResponse = getPlayer(currentTurn).getPlayerJSON().toString();
-		} catch (JSONException e) {
-			e.printStackTrace();
 		}
 	}
 		
@@ -379,6 +360,7 @@ public class Pinochle {
 			players.add(p);
 		else
 			throw new Exception("FourHandedPinochle Full");
+		notifyObservers();
 	}
 		
 	public boolean removePlayer(NIOSocket socket) throws Exception {
@@ -392,6 +374,7 @@ public class Pinochle {
 				}
 			}
 		}
+		notifyObservers();
 		return success;
 	}
 		
@@ -424,7 +407,7 @@ public class Pinochle {
 		
 	public boolean gameFull() {
 		boolean full = false;
-		if(players.size() == numPlayers) {
+		if(players.size() == 4) {
 			full = true;
 		}
 		return full;
@@ -434,16 +417,24 @@ public class Pinochle {
 		return getPlayer(currentTurn).getSocket();
 	}
 	
-	public JSONObject getPlayerJSON(NIOSocket socket) {
-		return getPlayer(socket).getPlayerJSON();
-	}
-	
 	public List<Player> getPlayer() {
 		return this.players;
 	}
-	
-	// Get broadcast or player response
-	public String getCurrentResponse() {
-		return playerResponse;
+
+	@Override
+	public void registerObserver(PinochleGameObserver observer) {
+		pinochleGameObservers.add(observer);
+	}
+
+	@Override
+	public void removeObserver(PinochleGameObserver observer) {
+		pinochleGameObservers.remove(observer);
+	}
+
+	@Override
+	public void notifyObservers() {
+		for (PinochleGameObserver observer : pinochleGameObservers) {
+			observer.update(this);
+		}
 	}
 }

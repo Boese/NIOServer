@@ -114,7 +114,7 @@ public class PinochleServer implements ServerSocketObserver{
 	private static class Game implements SocketObserver {
 
 		//private final static long LOGIN_TIMEOUT = 30 * 1000;
-        private final static int INACTIVITY_TIMEOUT = 5 * 60 * 1000;
+        private final static int INACTIVITY_TIMEOUT = 30 * 1000;
 		private List<NIOSocket> sockets;
 		private Pinochle pinochleGame;
         private DelayedEvent disconnectEvent;
@@ -133,7 +133,7 @@ public class PinochleServer implements ServerSocketObserver{
 		
 		private void broadcastGame() {
 			for (NIOSocket socket : sockets) {
-				socket.write(pinochleGame.getPlayerJSON(socket).toString().getBytes());
+					socket.write(pinochleGame.pinochleMessage.getPinochleMessage(socket).toString().getBytes());
 			}
 		}
 		private void broadcast(String message) {
@@ -155,13 +155,11 @@ public class PinochleServer implements ServerSocketObserver{
 			currentSocket = null; socketResponse = null;
 			
 			switch(g) {
-			case Broadcast: 
-			case Pause: 
-				broadcastGame();
-				break;
 			case Player:
-					currentSocket = pinochleGame.getCurrentSocket();
-					scheduleInactivityEvent(currentSocket, pinochleGame.getCurrentResponse());
+				currentSocket = pinochleGame.getCurrentSocket();
+				scheduleInactivityEvent(currentSocket);
+			case Broadcast: 
+				broadcastGame();
 				break;
 			case Gameover: gameOver = true;
 				break;
@@ -207,7 +205,7 @@ public class PinochleServer implements ServerSocketObserver{
             }
 		}
 		
-		private void scheduleInactivityEvent(NIOSocket socket, String message)
+		private void scheduleInactivityEvent(NIOSocket socket)
         {
             // Cancel the last disconnect event, schedule another.
             if (disconnectEvent != null) disconnectEvent.cancel();
@@ -219,7 +217,6 @@ public class PinochleServer implements ServerSocketObserver{
                     socket.closeAfterWrite();
                 }
             }, INACTIVITY_TIMEOUT);
-            socket.write(message.getBytes());
         }
 
 		@Override

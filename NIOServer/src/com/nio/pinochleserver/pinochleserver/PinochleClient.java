@@ -117,30 +117,33 @@ public class PinochleClient {
 	                                try {
 	                                	JSONObject j = new JSONObject(message);
 	                                	//System.out.println(j.toString());
-	                                	request = Request.valueOf(j.optString("request"));
-	                                	if(!cards.containsAll(jConvert.getCardsFromJSON(j.optJSONObject("My Cards")))) {
-	                                		cards = jConvert.getCardsFromJSON(j.optJSONObject("My Cards"));
+	                                	request = Request.valueOf(j.optString("currentRequest"));
+	                                	if(!cards.containsAll(jConvert.getCardsFromJSON(j.optJSONObject("Cards")))) {
+	                                		cards = jConvert.getCardsFromJSON(j.optJSONObject("Cards"));
 	                                		System.out.println(cards);
 	                                	}
-	                                	
-		                                	switch(request) {
-					                		case Card: System.out.println("Enter Card (1-4):");
-					                		requestNeeded();
-					                			break;
-											case Bid: System.out.println("Enter Bid :");
-											requestNeeded();
-												break;
-											case Cards: System.out.println("Enter Cards (1-12),(1-12),(1-12),(1-12):");
-											requestNeeded();
-												break;
-											case Null: System.out.println(j.optString("message"));
-												break;
-											case Trump: System.out.println("Enter Trump (1-4):");
-											requestNeeded();
-												break;
-											default:
-												break;
-					                	}
+	                                	if(j.getBoolean("MyTurn")) {
+			                                	switch(request) {
+						                		case Card: System.out.println("Enter Card (1-4):");
+						                		requestNeeded();
+						                			break;
+												case Bid: System.out.println("Enter Bid :");
+												requestNeeded();
+													break;
+												case Cards: System.out.println("Enter Cards (1-12),(1-12),(1-12),(1-12):");
+												requestNeeded();
+													break;
+												case Null: System.out.println(j.optString("currentMessage"));
+													break;
+												case Trump: System.out.println("Enter Trump (1-4):");
+												requestNeeded();
+													break;
+												default:
+													break;
+						                	}
+	                                	}
+	                                	else
+	                                		System.out.println(j.get("currentMessage"));
 	                                }
 	                                catch(Exception e) {
 	                                	System.out.println(message);

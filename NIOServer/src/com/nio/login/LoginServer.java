@@ -7,10 +7,22 @@ import naga.packetreader.AsciiLinePacketReader;
 import naga.packetwriter.AsciiLinePacketWriter;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.BulkWriteOperation;
+import com.mongodb.BulkWriteResult;
+import com.mongodb.Cursor;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.ParallelScanOptions;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -88,7 +100,8 @@ public class LoginServer implements ServerSocketObserver {
 		public void connectionBroken(NIOSocket socket, Exception e) {
 			System.out.println("Socket disconnected");
 			socket.closeAfterWrite();
-			delayedEvents.remove(socket);
+			if(delayedEvents.containsKey(socket))
+				delayedEvents.remove(socket);
 		}
 
 		@Override
@@ -100,7 +113,7 @@ public class LoginServer implements ServerSocketObserver {
                 	socket.write("Disconnected due to inactivity.".getBytes());
                 	socket.closeAfterWrite();
                 }
-            }, INACTIVITY_TIMEOUT);
+            }, LOGIN_TIMEOUT);
             socket.write("Please enter your username:".getBytes());
 			delayedEvents.put(socket, e);
 		}
@@ -140,6 +153,8 @@ public class LoginServer implements ServerSocketObserver {
 			 * to create new account -> hits rest webservice to insert into MongoDB *Not Server!
 			 * webservice will handle forgotten passwords, new users, email verification
 			 */
+			
+			
 			String randomKey = "1233211458";
 			String user = "Chris";
 			
