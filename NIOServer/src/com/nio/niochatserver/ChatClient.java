@@ -21,7 +21,7 @@ public class ChatClient {
                     NIOService service = new NIOService();
 
                     // Open our socket.
-                    NIOSocket socket = service.openSocket("localhost", 5218);
+                    NIOSocket socket = service.openSocket("localhost", 5217);
 
                     // Use regular 1 byte header reader/writer
                     socket.setPacketReader(new AsciiLinePacketReader());

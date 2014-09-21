@@ -84,7 +84,7 @@ public class PinochleServer implements ServerSocketObserver{
 	}
 	
 	public static void main(String[] args) {
-		int port = 5218;
+		int port = 5217;
 		try
 		{
             EventMachine machine = new EventMachine();
