@@ -12,7 +12,7 @@ public class ValidationServer
 {
         public static void main(String... args)
         {
-            int port = 5218;
+            int port = 5217;
             // Create a map with users and passwords.
     final Map<String, String> passwords = new HashMap<String, String>();
     passwords.put("Admin", "password");

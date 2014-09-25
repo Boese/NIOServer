@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.json.JSONObject;
+
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.CardComparator;
 import com.nio.pinochleserver.enums.Face;
@@ -18,6 +20,7 @@ public class Player {
 	private int team; //team 1 or team 2
 	private List<Card> currentCards; //current cards List<enum cards>
 	private Position teamMate;
+	private JSONObject currentJSON;
 
 	private NIOSocket socket;
 	
@@ -27,6 +30,7 @@ public class Player {
 		this.team = team;
 		this.currentCards = new ArrayList<Card>();
 		this.socket = socket;
+		this.currentJSON = new JSONObject();
 	}
 	
 	public String toString() {
@@ -64,6 +68,14 @@ public class Player {
 		}
 		String returnCards = hearts + spades + diamonds + clubs;
 		return returnCards;
+	}
+	
+	public void setJSON(JSONObject ob) {
+		this.currentJSON = ob;
+	}
+	
+	public JSONObject getJSON() {
+		return this.currentJSON;
 	}
 	
 	public List<Card> addCardsToCurrent(List<Card> cards) {

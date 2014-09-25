@@ -1,6 +1,5 @@
 package com.nio.pinochleserver.pinochlegames;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import naga.NIOSocket;
@@ -8,17 +7,14 @@ import naga.NIOSocket;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.nio.pinochleserver.enums.Position;
-import com.nio.pinochleserver.enums.Request;
-import com.nio.pinochleserver.enums.Suit;
-import com.nio.pinochleserver.helperfunctions.CalculateMeld;
+import com.nio.pinochleserver.enums.JSONConvert;
 import com.nio.pinochleserver.player.Player;
 
-public class PinochleMessage implements PinochleGameObserver {
+public class PinochleMessage {
 	
 	private JSONObject pinochleMessage;
-	private Position currentTurn;
 	private List<Player> players;
+	JSONConvert jConvert = new JSONConvert();
 	
 	public PinochleMessage() {
 		pinochleMessage = new JSONObject();
@@ -31,37 +27,19 @@ public class PinochleMessage implements PinochleGameObserver {
 				p = player;
 		}
 		try {
-			pinochleMessage.putOpt("Cards", p.getCurrentCards());
-			if(p.getPosition() == currentTurn)
-				pinochleMessage.putOpt("MyTurn", true);
-			else
-				pinochleMessage.putOpt("MyTurn", false);
+			pinochleMessage.putOpt("Cards", jConvert.convertCardsToJSON(p.getCurrentCards()));
+			pinochleMessage.putOpt("MyTurn", true);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		return pinochleMessage;
 	}
 	
-	public void updateJSONObject() {
-//		JSONObject playersMeldArray = new JSONObject();
-//		for (Player player : players) {
-//			int x = new CalculateMeld(currentTrump, player.getCurrentCards()).calculate();
-//			try {
-//				playersMeldArray.put("Player : " + player.getPosition(), x);
-//			} catch (JSONException e) {
-//				e.printStackTrace();
-//			}
-//		}
-//		try {
-//			pinochleMessage.put("Meld", playersMeldArray);
-//		} catch (JSONException e) {
-//			e.printStackTrace();
-//		}
+	public JSONObject getPinochleMessage() {
+		return pinochleMessage;
 	}
 
-	@Override
 	public void update(Pinochle pinochle) {
-		currentTurn = pinochle.currentTurn;
 		players = pinochle.players;
 		
 		try {

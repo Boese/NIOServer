@@ -122,7 +122,7 @@ public class PinochleClient {
 	                                		cards = jConvert.getCardsFromJSON(j.optJSONObject("Cards"));
 	                                		System.out.println(cards);
 	                                	}
-	                                	if(j.getBoolean("MyTurn")) {
+	                                	if(j.optBoolean("MyTurn") == true) {
 			                                	switch(request) {
 						                		case Card: System.out.println("Enter Card (1-4):");
 						                		requestNeeded();
@@ -143,7 +143,7 @@ public class PinochleClient {
 						                	}
 	                                	}
 	                                	else
-	                                		System.out.println(j.get("currentMessage"));
+	                                		System.out.println(j.optString("currentMessage"));
 	                                }
 	                                catch(Exception e) {
 	                                	System.out.println(message);

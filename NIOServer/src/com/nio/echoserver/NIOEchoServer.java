@@ -9,7 +9,7 @@ public class NIOEchoServer
   public static void main(String... args)
   {
     //int port = Integer.parseInt(args[0]);
-	  int port = 5218;
+	  int port = 5217;
     try
     {
       // Create the NIO service.

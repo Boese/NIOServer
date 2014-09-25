@@ -8,8 +8,8 @@ import java.util.Scanner;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.nio.pinochleserver.enums.GameResponse;
 import com.nio.pinochleserver.pinochlegames.Pinochle;
+import com.nio.pinochleserver.pinochlegames.GameStateObserver;
 
 import naga.ConnectionAcceptor;
 import naga.NIOServerSocket;
@@ -60,10 +60,10 @@ public class PinochleServer implements ServerSocketObserver{
 			Game game = null;
 			try {
 				game = new Game(this);
-				game.addSocket(socket);
 				currentGames.add(game);
 				System.out.println("Created new Game");
 				System.out.println("# of currentGames : " + currentGames.size());
+				game.addSocket(socket);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return;
@@ -111,98 +111,41 @@ public class PinochleServer implements ServerSocketObserver{
         return m_eventMachine;
     }
 	
-	private static class Game implements SocketObserver {
+	private static class Game implements SocketObserver,GameStateObserver {
 
 		//private final static long LOGIN_TIMEOUT = 30 * 1000;
-        private final static int INACTIVITY_TIMEOUT = 30 * 1000;
+        private final static int INACTIVITY_TIMEOUT = 300 * 1000;
 		private List<NIOSocket> sockets;
 		private Pinochle pinochleGame;
         private DelayedEvent disconnectEvent;
         private PinochleServer server;
-        private NIOSocket currentSocket;
         private JSONObject socketResponse;
-        private boolean gameOver = false;
 		
 		private Game(PinochleServer server) {
 			pinochleGame = new Pinochle();
+			pinochleGame.registerObserver(this);
 			this.sockets = new ArrayList<NIOSocket>();
 			this.server = server;
-			currentSocket = null;
 			socketResponse = null;
 		}
 		
-		private void broadcastGame() {
-			for (NIOSocket socket : sockets) {
-					socket.write(pinochleGame.pinochleMessage.getPinochleMessage(socket).toString().getBytes());
-			}
-		}
 		private void broadcast(String message) {
 			for (NIOSocket nioSocket : sockets) {
 				nioSocket.write(message.getBytes());
 			}
 		}
 		
-		public void drivePlay() {
-			boolean done = false;
-        	do {
-        		done = Play();
-        	}while(done);
-		}
-		
-		private boolean Play() {
-			//Broadcast until player response is needed
-			GameResponse g = pinochleGame.Play(socketResponse);
-			currentSocket = null; socketResponse = null;
-			
-			switch(g) {
-			case Player:
-				currentSocket = pinochleGame.getCurrentSocket();
-				scheduleInactivityEvent(currentSocket);
-			case Broadcast: 
-				broadcastGame();
-				break;
-			case Gameover: gameOver = true;
-				break;
-			default:
-				break;
-			}
-			
-			if(g.equals(GameResponse.Broadcast))
-				return true;
-			return false;
-		}
-		
 		@Override
 		public void connectionBroken(NIOSocket socket, Exception arg1) {
-            if(sockets.contains(socket))
-            	sockets.remove(socket);
-			try {
-				pinochleGame.removePlayer(socket);
-			} catch (Exception e) {
-			}
-			broadcast("Waiting for players ... (" + sockets.size() + " players)");
-            System.out.println("socket disconnected on port : " + socket.getPort());
-            
-			if(sockets.size() == 0)
-				server.removeGame(this);
-			
-			if(disconnectEvent != null) disconnectEvent.cancel();
-			currentSocket = null;
-			Play();
+            removeSocket(socket);
+            pinochleGame.Play(null);
 		}
 		
 		@Override
 		public void connectionOpened(NIOSocket socket) {
-            System.out.println("new socket connected on port : " + socket.getPort());
-            socket.write(("Player : " + pinochleGame.getPosition(socket).toString()).getBytes());
-            
-            if(isFull()) {
-            	broadcast("Waiting for players ... (" + sockets.size() + " players)");
-            	drivePlay();
-            }
-            else {
-            	broadcast("Waiting for players ... (" + sockets.size() + " players)");
-            }
+			String temp = "You are player : " + pinochleGame.getPlayer(socket).getPosition();
+			socket.write(temp.getBytes());
+			pinochleGame.Play(null);
 		}
 		
 		private void scheduleInactivityEvent(NIOSocket socket)
@@ -221,25 +164,20 @@ public class PinochleServer implements ServerSocketObserver{
 
 		@Override
 		public void packetReceived(NIOSocket socket, byte[] packet) {
-			if(currentSocket == socket) {
+			if(pinochleGame.getCurrentSocket() == socket) {
 				if (disconnectEvent != null) disconnectEvent.cancel(); 
 				String temp = new String(packet).trim();
 				try {
 					socketResponse = new JSONObject(temp);
+					pinochleGame.Play(socketResponse);
 				} catch (JSONException e1) {
 					e1.printStackTrace();
 				}
-				currentSocket = null;
-				drivePlay();
 			}
 		}
 
 		@Override
-		public void packetSent(NIOSocket socket, Object arg1) {
-			// Check if game is over and close socket
-			if(gameOver) 
-				socket.closeAfterWrite();
-		}
+		public void packetSent(NIOSocket socket, Object arg1) {}
 		
 		public void addSocket(NIOSocket socket) {
 			 try {
@@ -248,16 +186,54 @@ public class PinochleServer implements ServerSocketObserver{
 				socket.setPacketReader(new AsciiLinePacketReader());
 	            socket.setPacketWriter(new AsciiLinePacketWriter());
 				socket.listen(this);
+				System.out.println("new socket connected on port : " + socket.getPort());
 			} catch (Exception e) {
 				e.printStackTrace();
+				System.out.println("Error adding player to game");
 			}
 		 }
+		
+		public void removeSocket(NIOSocket socket) {
+			if(sockets.contains(socket))
+            {
+				try {
+					socket.closeAfterWrite();
+					sockets.remove(socket);
+					pinochleGame.removePlayer(socket);
+					System.out.println("socket disconnected on port : " + socket.getPort());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+            }
+            
+			if(sockets.size() == 0) {
+				server.removeGame(this);
+			}
+			
+			if(disconnectEvent != null) disconnectEvent.cancel();
+		}
 		 
 		 public boolean isFull() {
-			 if(sockets.size() == 4)
-				 return true;
-			 return false;
+			 return (pinochleGame.gameFull()) ? true : false;
 		 }
+
+		@Override
+		public void gameOver() {
+			for (NIOSocket socket : sockets) {
+				socket.closeAfterWrite();
+			}
+		}
+
+		@Override
+		public void notifyAll(String msg) {
+			broadcast(msg);
+		}
+
+		@Override
+		public void request(NIOSocket socket, String msg) {
+			socket.write(msg.getBytes());
+			scheduleInactivityEvent(socket);
+		}
 	}
 
 }
