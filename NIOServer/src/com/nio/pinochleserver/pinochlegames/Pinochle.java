@@ -2,16 +2,16 @@ package com.nio.pinochleserver.pinochlegames;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import naga.NIOSocket;
 
 import org.json.JSONObject;
 
-import com.nio.pinochleserver.enums.JSONConvert;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
+import com.nio.pinochleserver.helperfunctions.JSONConvert;
 import com.nio.pinochleserver.player.Player;
-
 import com.nio.pinochleserver.states.*;
 
 public class Pinochle implements GameStateSubject, iPinochleState{

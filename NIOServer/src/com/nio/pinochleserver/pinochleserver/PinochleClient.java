@@ -8,9 +8,9 @@ import java.util.List;
 import org.json.JSONObject;
 
 import com.nio.pinochleserver.enums.Card;
-import com.nio.pinochleserver.enums.JSONConvert;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
+import com.nio.pinochleserver.helperfunctions.JSONConvert;
 
 import naga.NIOService;
 import naga.NIOSocket;

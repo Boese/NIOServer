@@ -1,10 +1,14 @@
-package com.nio.pinochleserver.enums;
+package com.nio.pinochleserver.helperfunctions;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import com.nio.pinochleserver.enums.Card;
+import com.nio.pinochleserver.enums.Face;
+import com.nio.pinochleserver.enums.Suit;
 
 public class JSONConvert {
 	

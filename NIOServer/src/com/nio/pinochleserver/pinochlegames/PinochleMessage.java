@@ -7,7 +7,7 @@ import naga.NIOSocket;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.nio.pinochleserver.enums.JSONConvert;
+import com.nio.pinochleserver.helperfunctions.JSONConvert;
 import com.nio.pinochleserver.player.Player;
 
 public class PinochleMessage {
