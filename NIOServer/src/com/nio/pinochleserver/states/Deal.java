@@ -27,8 +27,8 @@ public class Deal implements iPinochleState {
 		deal();
 		
 		if(!checkForNines()) {
+			((Bid) mP.getBidState()).startBid();
 			mP.setState(mP.getBidState());
-			mP.setBid(new Bid(mP));
 		}
 		else {
 			mP.setCurrentMessage("Re-dealing... One Player got 5 Nines and no meld!");

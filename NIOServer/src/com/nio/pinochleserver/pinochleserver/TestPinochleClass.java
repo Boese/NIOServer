@@ -4,6 +4,7 @@ import static java.util.Arrays.asList;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -45,8 +46,20 @@ public class TestPinochleClass {
 //		CalculateMeld c = new CalculateMeld(Suit.Spades, cards);
 //		int x = c.calculate();
 //		System.out.println(x);
+		Iterator<Position> bidTurn;
+		List<Position> bidders = new ArrayList<Position>();;
 		
-		MongoClient mongoClient = null;
+		for(int i=0;i<4;i++)
+			bidders.add(Position.North.getNext(i));
+		bidTurn = bidders.listIterator();
+		
+		System.out.println(bidTurn.next());
+		
+		bidTurn.remove();
+		
+		System.out.println(bidTurn.next());
+		
+/*		MongoClient mongoClient = null;
 		try {
 			mongoClient = new MongoClient("localhost");
 		} catch (UnknownHostException e1) {
@@ -84,7 +97,7 @@ public class TestPinochleClass {
 		if(coll.findOne(temp) != null)
 			System.out.println("success");
 		else
-			System.out.println("fail");
+			System.out.println("fail");*/
 		//JSONConvert jConvert = new JSONConvert();
 //		JSONObject object = new JSONObject();
 //		

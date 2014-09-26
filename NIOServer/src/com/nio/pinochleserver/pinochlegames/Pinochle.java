@@ -17,30 +17,26 @@ import com.nio.pinochleserver.states.*;
 public class Pinochle implements GameStateSubject, iPinochleState{
 	
 	//** Class Variables
-	List<Player> players = new ArrayList<Player>(4);
+	List<Player> players;
 	int team1Score = 0;
 	int team2Score = 0;
-	int currentBid = 0;
-	Position currentTurn = Position.North;
-	Position bidTurn = Position.North;
-	Boolean newBidTurn = true;
-	Suit currentTrump = null;
-	Position highestBidder = null;
-	Request currentRequest = Request.Null;
-	JSONConvert jConvert = new JSONConvert();
-	Object lastMove = new Object();
-	String currentMessage = "";
+	Position currentTurn;
+	Suit currentTrump;
+	Request currentRequest;
+	JSONConvert jConvert;
+	Object lastMove;
+	String currentMessage;
 	
 	//** iPinochleStates
-	iPinochleState Start = new Start(this);
-	iPinochleState Deal = new Deal(this);
-	iPinochleState Bid = new Bid(this);
-	iPinochleState Trump = new Trump(this);
-	iPinochleState Pass = new Pass(this);
-	iPinochleState Meld = new Meld(this);
-	iPinochleState Pause = new Pause(this);
-	iPinochleState Gameover = new Gameover(this);
-	iPinochleState Round = new Round(this);
+	iPinochleState Start;
+	iPinochleState Deal;
+	iPinochleState Bid;
+	iPinochleState Trump;
+	iPinochleState Pass;
+	iPinochleState Meld;
+	iPinochleState Pause;
+	iPinochleState Gameover;
+	iPinochleState Round;
 	
 	//** Observers
 	List<GameStateObserver> pinochleGameObservers = new ArrayList<GameStateObserver>();
@@ -50,7 +46,25 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 	iPinochleState currentState = Start;
 	
 	//** Default Constructor
-	public Pinochle() {}
+	public Pinochle() {
+		players = new ArrayList<Player>(4);
+		currentTurn = Position.North;
+		currentTrump = null;
+		currentRequest = Request.Null;
+		jConvert = new JSONConvert();
+		lastMove = new Object();
+		currentMessage = "";
+		
+		Start = new Start(this);
+		Deal = new Deal(this);
+		Bid = new Bid(this);
+		Trump = new Trump(this);
+		Pass = new Pass(this);
+		Meld = new Meld(this);
+		Pause = new Pause(this);
+		Gameover = new Gameover(this);
+		Round = new Round(this);
+	}
 	
 	// Set current state
 	public void setState(final iPinochleState state) {
@@ -94,6 +108,12 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		for (GameStateObserver observer : pinochleGameObservers)
 			observer.request(getCurrentSocket(), pinochleMessage.getPinochleMessage(getCurrentSocket()).toString());
 	}
+	
+	@Override
+	public void playerNotification(NIOSocket socket, String msg) {
+		for(GameStateObserver observer : pinochleGameObservers)
+			observer.notifyPlayer(socket, msg);
+	}
 		
 	// Helper methods
 	private Position findNextAvailablePosition() {
@@ -114,8 +134,11 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		if(position.equals(Position.East) || position.equals(Position.West))
 			teamNum = 2;
 		Player p = new Player(position,teamNum,socket);
-		if(players.size() <= 3)
+		if(players.size() <= 3) {
 			players.add(p);
+			playerNotification(socket, "**WELCOME TO PINOCHLE**");
+			playerNotification(socket, "You are player " + position + " on team " + teamNum);
+		}
 		else
 			throw new Exception("FourHandedPinochle Full");
 	}
@@ -124,6 +147,9 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		for (Player player : players) {
 			if(player.getSocket() == socket) {
 				players.remove(player);
+				currentRequest = Request.Null;
+				currentMessage = "Player " + player.getPosition() + " just quit...";
+				notification();
 				break;
 			}
 		}
@@ -192,14 +218,6 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		this.team2Score = team2Score;
 	}
 
-	public int getCurrentBid() {
-		return currentBid;
-	}
-
-	public void setCurrentBid(int currentBid) {
-		this.currentBid = currentBid;
-	}
-
 	public Position getCurrentTurn() {
 		return currentTurn;
 	}
@@ -208,36 +226,12 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		this.currentTurn = currentTurn;
 	}
 
-	public Position getBidTurn() {
-		return bidTurn;
-	}
-
-	public void setBidTurn(Position bidTurn) {
-		this.bidTurn = bidTurn;
-	}
-
-	public Boolean getNewBidTurn() {
-		return newBidTurn;
-	}
-
-	public void setNewBidTurn(Boolean newBidTurn) {
-		this.newBidTurn = newBidTurn;
-	}
-
 	public Suit getCurrentTrump() {
 		return currentTrump;
 	}
 
 	public void setCurrentTrump(Suit currentTrump) {
 		this.currentTrump = currentTrump;
-	}
-
-	public Position getHighestBidder() {
-		return highestBidder;
-	}
-
-	public void setHighestBidder(Position highestBidder) {
-		this.highestBidder = highestBidder;
 	}
 
 	public Request getCurrentRequest() {

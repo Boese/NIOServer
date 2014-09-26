@@ -1,8 +1,8 @@
 package com.nio.pinochleserver.states;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 import org.json.JSONObject;
 
@@ -12,105 +12,93 @@ import com.nio.pinochleserver.pinochlegames.Pinochle;
 import com.nio.pinochleserver.pinochlegames.iPinochleState;
 
 public class Bid implements iPinochleState{
-	private List<Position> bidders;
-	private ListIterator<Position> biddersIterator;
-	private int i = 0;
+	List<Position> bidders;
+	Iterator<Position> bidTurn;
+	Position lastBidder;
+	int currentBid;
 	
 	Pinochle mP;
 	public Bid(Pinochle p){
 		this.mP = p;
+		this.lastBidder = mP.getCurrentTurn();
 	}
 	@Override
 	public void Play(JSONObject response) {
-		if(mP.getNewBidTurn()) {
-			startBid(); 
-			mP.setNewBidTurn(false);
-			mP.setCurrentMessage("Starting bidding round with : " + mP.getCurrentTurn());
-			mP.notification();
-		}
-
-		int move = mP.getjConvert().getBidFromJSON(response);
-		if(move != -1)
-		{
-			mP.setLastMove(move);
-			boolean result = bid(move);
-			if(result && mP.getHighestBidder() != null) {
-				mP.setNewBidTurn(true);
-				mP.setCurrentMessage("Selecting Trump...");
+		
+		// Try to get bid from JSONObject
+		int bid = mP.getjConvert().getBidFromJSON(response);
+		
+		// If bid = -1, JSONObject is invalid. Re-prompt player
+		if(bid != -1) {
+			
+			// If bid == 0, player passes. Notify and remove player from bidders. Increment turn.
+			if(bid == 0) {
+				mP.setCurrentMessage("Current Bid from player " + mP.getCurrentTurn() + " : pass");
 				mP.notification();
+				bidTurn.remove();
+				incTurn();
+			}
+			
+			// If bid > currentBid, set currentBid = bid. Notify players. Increment turn.
+			else if(bid > currentBid) {
+				mP.setCurrentMessage("Current Bid from player " + mP.getCurrentTurn() + " : " + currentBid);
+				mP.notification();
+				incTurn();
+				currentBid = bid;
+			}
+			
+			// Check if there is one bidder left and at least one bid **Return
+			if(bidders.size() == 1 && currentBid != 0) {
+				lastBidder = lastBidder.getNext(1);
+				mP.setCurrentTurn(bidders.get(0));
 				mP.setState(mP.getTrumpState());
+				mP.setCurrentMessage("Player " + mP.getCurrentTurn() + " won bid at " + currentBid + ", Selecting Trump...");
+				mP.notification();
 				mP.Play(null);
 				return;
 			}
-	
-			else if(result && mP.getHighestBidder() == null) {
-				mP.setNewBidTurn(true);
+			// Check if everyone passed **Return
+			else if(bidders.size() == 0) {
+				lastBidder = lastBidder.getNext(1);
+				mP.setCurrentTurn(lastBidder);
+				mP.setState(mP.getDealState());
 				mP.setCurrentMessage("Everyone passed! Redeal...");
 				mP.notification();
-				mP.setState(mP.getDealState());
 				mP.Play(null);
 				return;
 			}
 		}
 		
-		mP.setCurrentMessage("current bid ('0' to pass) : " + mP.getCurrentBid());
-		mP.notification();
+		// Prompt player to Bid
 		mP.setCurrentRequest(Request.Bid);
 		mP.playerRequest();
 	}
 	
 	private void incTurn() {
-		mP.setBidTurn(mP.getBidTurn().getNext(1));
+		//Check if iterator is at end of bidders
+		if(!bidTurn.hasNext())
+			bidTurn = bidders.listIterator();
+		
+		// Make sure bidders is not empty
+		if(bidders.size() > 0)
+			mP.setCurrentTurn(bidTurn.next());
 	}
 	
-	private void startBid() {
+	public void startBid() {
+		
+		// Set current turn to last bidder. Initialize currentBid to 0.
+		mP.setCurrentTurn(lastBidder);
+		currentBid = 0;
+		
+		// Notify players that the bidding round is starting and which turn it is
+		mP.setCurrentMessage("Starting bidding round with : " + mP.getCurrentTurn());
+		mP.notification();
+		
+		// Initialize bidders list with the correct order of players starting with last bidder. Set bidTurn to bidders.listIterator
 		bidders = new ArrayList<Position>();
 		for(int i=0;i<4;i++)
-			bidders.add(mP.getBidTurn().getNext(1));
-		biddersIterator = bidders.listIterator();
-		mP.setCurrentTurn(mP.getBidTurn());
-		mP.setCurrentBid(0);
-		mP.setHighestBidder(null);
-	}
-	
-	private boolean bid(int bid) {
-		Position currentPosition = biddersIterator.next();
-		
-		// bidder passed remove bidder
-		if(bid == 0) {
-			biddersIterator.remove();
-		}
-		// bidder bid
-		else if(bid > mP.getCurrentBid()) {
-			mP.setCurrentBid(bid);
-			mP.setHighestBidder(currentPosition);
-		}
-		// bid not high enough prompt again
-		else {
-			mP.setCurrentTurn(biddersIterator.previous());
-			return false;
-		}
-		
-		//one bidder left and at least one bid
-		if(bidders.size() == 1 && mP.getCurrentBid() != 0) {
-			mP.setCurrentTurn(mP.getHighestBidder());
-			incTurn();
-			return true;
-		}
-		//everyone passed
-		if(bidders.size() == 0) {
-			mP.setCurrentTurn(mP.getBidTurn());
-			incTurn();
-			return true;
-		}
-		
-		//Check if iterator is at end of bidders
-		if(!biddersIterator.hasNext())
-			biddersIterator = bidders.listIterator();
-		
-		//set the current turn to next available bidder
-		mP.setCurrentTurn(biddersIterator.next());
-		biddersIterator.previous();
-		return false;
+			bidders.add(lastBidder.getNext(i));
+		bidTurn = bidders.listIterator();
+		bidTurn.next();
 	}
 }

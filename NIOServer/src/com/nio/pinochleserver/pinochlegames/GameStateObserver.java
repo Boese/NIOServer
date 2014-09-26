@@ -6,4 +6,5 @@ public interface GameStateObserver {
 	public void gameOver();
 	public void notifyAll(String msg);
 	public void request(NIOSocket socket, String msg);
+	public void notifyPlayer(NIOSocket socket, String msg);
 }

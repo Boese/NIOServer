@@ -143,8 +143,6 @@ public class PinochleServer implements ServerSocketObserver{
 		
 		@Override
 		public void connectionOpened(NIOSocket socket) {
-			String temp = "You are player : " + pinochleGame.getPlayer(socket).getPosition();
-			socket.write(temp.getBytes());
 			pinochleGame.Play(null);
 		}
 		
@@ -182,10 +180,10 @@ public class PinochleServer implements ServerSocketObserver{
 		public void addSocket(NIOSocket socket) {
 			 try {
 				sockets.add(socket);
-				pinochleGame.addPlayer(socket);
 				socket.setPacketReader(new AsciiLinePacketReader());
 	            socket.setPacketWriter(new AsciiLinePacketWriter());
 				socket.listen(this);
+				pinochleGame.addPlayer(socket);
 				System.out.println("new socket connected on port : " + socket.getPort());
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -227,6 +225,11 @@ public class PinochleServer implements ServerSocketObserver{
 		@Override
 		public void notifyAll(String msg) {
 			broadcast(msg);
+		}
+		
+		@Override
+		public void notifyPlayer(NIOSocket socket, String msg) {
+			socket.write(msg.getBytes());
 		}
 
 		@Override

@@ -47,11 +47,9 @@ public class PinochleMessage {
 			.put("team1Score", pinochle.team1Score)
 			.put("team2Score", pinochle.team2Score)
 			.put("currentTurn", pinochle.currentTurn)
-			.put("currentTrump", pinochle.currentTrump)
 			.put("currentRequest", pinochle.currentRequest)
 			.put("lastMove", pinochle.lastMove)
 			.put("currentState", pinochle.currentState)
-			.put("currentBid", pinochle.currentBid)
 			.put("currentMessage", pinochle.currentMessage);
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
