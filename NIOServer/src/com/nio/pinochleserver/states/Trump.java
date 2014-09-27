@@ -18,13 +18,13 @@ public class Trump implements iPinochleState {
 		move = mP.getjConvert().getTrumpFromJSON(response);
 		if(move == null) {
 			mP.setCurrentRequest(Request.Trump);
-			mP.playerRequest();
+			mP.notifyObservers();
 		}
 		else {
 			mP.setCurrentTrump(move);
 			mP.setLastMove(move);
 			mP.setCurrentMessage("Trump is " + mP.getCurrentTrump());
-			mP.notification();
+			mP.notifyObservers();
 			mP.setState(mP.getPassState());
 			mP.Play(null);
 		}

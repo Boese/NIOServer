@@ -17,7 +17,7 @@ public class Pass implements iPinochleState {
 	@Override
 	public void Play(JSONObject response) {
 		mP.setCurrentMessage("*** PASSING CARDS ***");
-		mP.notification();
+		mP.notifyObservers();
 		mP.setState(mP.getMeldState());
 		mP.Play(null);
 	}

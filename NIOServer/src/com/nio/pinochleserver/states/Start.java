@@ -16,7 +16,7 @@ public class Start implements iPinochleState {
 	@Override
 	public void Play(JSONObject response) {
 		mP.setCurrentMessage("Starting Game!");
-		mP.notification();
+		mP.notifyObservers();
 		mP.setState(mP.getDealState());
 		mP.Play(null);
 	}

@@ -18,7 +18,7 @@ public class Pause implements iPinochleState {
 		if(mP.gameFull()) {
 			gameHasStarted = true;
 			mP.setCurrentMessage("Game is about to start...");
-			mP.notification();
+			mP.notifyObservers();
 			mP.setState(mP.getStartState());
 			mP.Play(null);
 		}
@@ -28,7 +28,7 @@ public class Pause implements iPinochleState {
 				mP.setCurrentMessage("**PAUSED - RESTARTING ROUND** Waiting for " + playersNeeded + " more player(s)");
 			else
 				mP.setCurrentMessage("Waiting for " + playersNeeded + " more player(s) to start game");
-			mP.notification();
+			mP.notifyObservers();
 		}
 	}
 }

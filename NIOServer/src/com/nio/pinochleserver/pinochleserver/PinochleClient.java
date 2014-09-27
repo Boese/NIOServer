@@ -116,7 +116,7 @@ public class PinochleClient {
                                 String message = new String(packet).trim();
 	                                try {
 	                                	JSONObject j = new JSONObject(message);
-	                                	//System.out.println(j.toString());
+	                                	System.out.println(j.toString(1));
 	                                	request = Request.valueOf(j.optString("currentRequest"));
 	                                	if(!cards.containsAll(jConvert.getCardsFromJSON(j.optJSONObject("Cards")))) {
 	                                		cards = jConvert.getCardsFromJSON(j.optJSONObject("Cards"));

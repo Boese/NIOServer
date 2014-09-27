@@ -13,7 +13,7 @@ public class Round implements iPinochleState {
 	@Override
 	public void Play(JSONObject response) {
 		mP.setCurrentMessage("Playing Round...");
-		mP.notification();
+		mP.notifyObservers();
 		mP.setCurrentState(mP.getGameoverState());
 		mP.Play(null);
 	}

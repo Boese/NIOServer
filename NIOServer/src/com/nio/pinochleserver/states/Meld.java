@@ -13,7 +13,7 @@ public class Meld implements iPinochleState {
 	@Override
 	public void Play(JSONObject response) {
 		mP.setCurrentMessage("Melding Cards...");
-		mP.notification();
+		mP.notifyObservers();
 		mP.setState(mP.getRoundState());
 		mP.Play(null);
 	}

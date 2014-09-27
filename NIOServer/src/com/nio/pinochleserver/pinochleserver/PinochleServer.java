@@ -3,6 +3,7 @@ package com.nio.pinochleserver.pinochleserver;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import org.json.JSONException;
@@ -114,7 +115,7 @@ public class PinochleServer implements ServerSocketObserver{
 	private static class Game implements SocketObserver,GameStateObserver {
 
 		//private final static long LOGIN_TIMEOUT = 30 * 1000;
-        private final static int INACTIVITY_TIMEOUT = 300 * 1000;
+        private final static int INACTIVITY_TIMEOUT = 30 * 1000;
 		private List<NIOSocket> sockets;
 		private Pinochle pinochleGame;
         private DelayedEvent disconnectEvent;
@@ -127,12 +128,6 @@ public class PinochleServer implements ServerSocketObserver{
 			this.sockets = new ArrayList<NIOSocket>();
 			this.server = server;
 			socketResponse = null;
-		}
-		
-		private void broadcast(String message) {
-			for (NIOSocket nioSocket : sockets) {
-				nioSocket.write(message.getBytes());
-			}
 		}
 		
 		@Override
@@ -216,27 +211,14 @@ public class PinochleServer implements ServerSocketObserver{
 		 }
 
 		@Override
-		public void gameOver() {
-			for (NIOSocket socket : sockets) {
-				socket.closeAfterWrite();
+		public void update(Map<NIOSocket, JSONObject> mapPlayers, NIOSocket socket) {
+			for(Map.Entry<NIOSocket, JSONObject> mapEntry : mapPlayers.entrySet()) {
+				NIOSocket s = mapEntry.getKey();
+				String msg = mapEntry.getValue().toString();
+				s.write(msg.getBytes());
 			}
 		}
 
-		@Override
-		public void notifyAll(String msg) {
-			broadcast(msg);
-		}
-		
-		@Override
-		public void notifyPlayer(NIOSocket socket, String msg) {
-			socket.write(msg.getBytes());
-		}
-
-		@Override
-		public void request(NIOSocket socket, String msg) {
-			socket.write(msg.getBytes());
-			scheduleInactivityEvent(socket);
-		}
 	}
 
 }

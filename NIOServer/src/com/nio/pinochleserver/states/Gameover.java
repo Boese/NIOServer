@@ -13,7 +13,6 @@ public class Gameover implements iPinochleState {
 	@Override
 	public void Play(JSONObject response) {
 		mP.setCurrentMessage("Game Over!");
-		mP.notification();
-		mP.gameOver();
+		mP.notifyObservers();
 	}
 }

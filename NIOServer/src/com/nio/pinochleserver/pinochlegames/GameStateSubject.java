@@ -7,8 +7,5 @@ public interface GameStateSubject {
 
     public void removeObserver(GameStateObserver observer);
 
-    public void gameOver();
-    public void notification();
-    public void playerRequest();
-    public void playerNotification(NIOSocket socket, String msg);
+    public void notifyObservers();
 }

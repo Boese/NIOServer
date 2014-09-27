@@ -33,18 +33,18 @@ public class Bid implements iPinochleState{
 			
 			// If bid == 0, player passes. Notify and remove player from bidders. Increment turn.
 			if(bid == 0) {
-				mP.setCurrentMessage("Current Bid from player " + mP.getCurrentTurn() + " : pass");
-				mP.notification();
+				mP.setCurrentMessage("Bid from player " + mP.getCurrentTurn() + " : pass");
+				mP.notifyObservers();
 				bidTurn.remove();
 				incTurn();
 			}
 			
 			// If bid > currentBid, set currentBid = bid. Notify players. Increment turn.
 			else if(bid > currentBid) {
-				mP.setCurrentMessage("Current Bid from player " + mP.getCurrentTurn() + " : " + currentBid);
-				mP.notification();
-				incTurn();
 				currentBid = bid;
+				mP.setCurrentMessage("Bid from player " + mP.getCurrentTurn() + " : " + currentBid);
+				mP.notifyObservers();
+				incTurn();
 			}
 			
 			// Check if there is one bidder left and at least one bid **Return
@@ -53,7 +53,7 @@ public class Bid implements iPinochleState{
 				mP.setCurrentTurn(bidders.get(0));
 				mP.setState(mP.getTrumpState());
 				mP.setCurrentMessage("Player " + mP.getCurrentTurn() + " won bid at " + currentBid + ", Selecting Trump...");
-				mP.notification();
+				mP.notifyObservers();
 				mP.Play(null);
 				return;
 			}
@@ -63,7 +63,7 @@ public class Bid implements iPinochleState{
 				mP.setCurrentTurn(lastBidder);
 				mP.setState(mP.getDealState());
 				mP.setCurrentMessage("Everyone passed! Redeal...");
-				mP.notification();
+				mP.notifyObservers();
 				mP.Play(null);
 				return;
 			}
@@ -71,7 +71,7 @@ public class Bid implements iPinochleState{
 		
 		// Prompt player to Bid
 		mP.setCurrentRequest(Request.Bid);
-		mP.playerRequest();
+		mP.notifyObservers();
 	}
 	
 	private void incTurn() {
@@ -92,7 +92,7 @@ public class Bid implements iPinochleState{
 		
 		// Notify players that the bidding round is starting and which turn it is
 		mP.setCurrentMessage("Starting bidding round with : " + mP.getCurrentTurn());
-		mP.notification();
+		mP.notifyObservers();
 		
 		// Initialize bidders list with the correct order of players starting with last bidder. Set bidTurn to bidders.listIterator
 		bidders = new ArrayList<Position>();

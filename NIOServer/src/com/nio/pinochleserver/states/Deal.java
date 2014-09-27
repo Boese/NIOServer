@@ -23,8 +23,8 @@ public class Deal implements iPinochleState {
 	@Override
 	public void Play(JSONObject response) {
 		mP.setCurrentMessage("Dealing...");
-		mP.notification();
 		deal();
+		mP.notifyObservers();
 		
 		if(!checkForNines()) {
 			((Bid) mP.getBidState()).startBid();
@@ -32,7 +32,7 @@ public class Deal implements iPinochleState {
 		}
 		else {
 			mP.setCurrentMessage("Re-dealing... One Player got 5 Nines and no meld!");
-			mP.notification();
+			mP.notifyObservers();
 		}
 		
 		mP.Play(null);

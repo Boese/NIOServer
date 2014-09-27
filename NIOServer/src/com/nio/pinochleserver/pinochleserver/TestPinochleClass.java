@@ -4,8 +4,10 @@ import static java.util.Arrays.asList;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import org.json.JSONArray;
@@ -59,6 +61,15 @@ public class TestPinochleClass {
 		
 		System.out.println(bidTurn.next());
 		
+		Map<Integer, String> testMap = new HashMap<Integer,String>();
+		testMap.put(0, "0");
+		testMap.put(1, "1");
+		testMap.put(2, "2");
+		testMap.put(3, "3");
+		
+		for (Map.Entry<Integer, String> test : testMap.entrySet()) {
+			System.out.println(test.getKey() + test.getValue());
+		}
 /*		MongoClient mongoClient = null;
 		try {
 			mongoClient = new MongoClient("localhost");

@@ -2,15 +2,18 @@ package com.nio.pinochleserver.pinochlegames;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import naga.NIOSocket;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.JSONConvert;
+import com.nio.pinochleserver.helperfunctions.PinochleMessage;
 import com.nio.pinochleserver.player.Player;
 import com.nio.pinochleserver.states.*;
 
@@ -39,8 +42,8 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 	iPinochleState Round;
 	
 	//** Observers
-	List<GameStateObserver> pinochleGameObservers = new ArrayList<GameStateObserver>();
-	PinochleMessage pinochleMessage = new PinochleMessage();
+	List<GameStateObserver> pinochleGameObservers;
+	PinochleMessage pinochleMessage;
 	
 	//** Current iPinochleState
 	iPinochleState currentState = Start;
@@ -64,6 +67,9 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		Pause = new Pause(this);
 		Gameover = new Gameover(this);
 		Round = new Round(this);
+		
+		pinochleGameObservers = new ArrayList<GameStateObserver>();
+		pinochleMessage = new PinochleMessage();
 	}
 	
 	// Set current state
@@ -90,30 +96,12 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 	}
 	
 	@Override
-	public void gameOver() {
-		pinochleMessage.update(this);
+	public void notifyObservers() {
+		Map<NIOSocket,JSONObject> mapPlayers = pinochleMessage.updateGetMap(this);
+		
 		for(GameStateObserver observer : pinochleGameObservers)
-			observer.gameOver();
-	}
-	@Override
-	public void notification() {
-		pinochleMessage.update(this);
-		for(GameStateObserver observer : pinochleGameObservers)
-			observer.notifyAll(pinochleMessage.getPinochleMessage().toString());
+			observer.update(mapPlayers, getCurrentSocket());
 	};
-
-	@Override
-	public void playerRequest() {
-		pinochleMessage.update(this);
-		for (GameStateObserver observer : pinochleGameObservers)
-			observer.request(getCurrentSocket(), pinochleMessage.getPinochleMessage(getCurrentSocket()).toString());
-	}
-	
-	@Override
-	public void playerNotification(NIOSocket socket, String msg) {
-		for(GameStateObserver observer : pinochleGameObservers)
-			observer.notifyPlayer(socket, msg);
-	}
 		
 	// Helper methods
 	private Position findNextAvailablePosition() {
@@ -136,8 +124,8 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		Player p = new Player(position,teamNum,socket);
 		if(players.size() <= 3) {
 			players.add(p);
-			playerNotification(socket, "**WELCOME TO PINOCHLE**");
-			playerNotification(socket, "You are player " + position + " on team " + teamNum);
+			currentMessage = "**WELCOME TO PINOCHLE**";
+			notifyObservers();
 		}
 		else
 			throw new Exception("FourHandedPinochle Full");
@@ -149,7 +137,7 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 				players.remove(player);
 				currentRequest = Request.Null;
 				currentMessage = "Player " + player.getPosition() + " just quit...";
-				notification();
+				notifyObservers();
 				break;
 			}
 		}
@@ -191,7 +179,11 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 	}
 	
 	public NIOSocket getCurrentSocket() {
-		return getPlayer(currentTurn).getSocket();
+		for (Player p : players) {
+			if(p.getPosition() == currentTurn)
+				return p.getSocket();
+		}
+		return null;
 	}
 	
 	public List<Player> getPlayers() {
