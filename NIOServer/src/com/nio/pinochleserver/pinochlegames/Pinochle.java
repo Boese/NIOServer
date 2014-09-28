@@ -6,9 +6,11 @@ import java.util.Map;
 
 import naga.NIOSocket;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nio.pinochleserver.enums.PinochleState;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
@@ -17,6 +19,7 @@ import com.nio.pinochleserver.helperfunctions.PinochleMessage;
 import com.nio.pinochleserver.player.Player;
 import com.nio.pinochleserver.states.*;
 
+@JsonAutoDetect
 public class Pinochle implements GameStateSubject, iPinochleState{
 	
 	//** Class Variables
@@ -26,37 +29,39 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 	Position currentTurn;
 	Suit currentTrump;
 	Request currentRequest;
-	JSONConvert jConvert;
-	Object lastMove;
 	String currentMessage;
+	PinochleState pinochleState;
+	NIOSocket currentSocket;
 	
 	//** iPinochleStates
-	iPinochleState Start;
-	iPinochleState Deal;
-	iPinochleState Bid;
-	iPinochleState Trump;
-	iPinochleState Pass;
-	iPinochleState Meld;
-	iPinochleState Pause;
-	iPinochleState Gameover;
-	iPinochleState Round;
+	static iPinochleState Start;
+	static iPinochleState Deal;
+	static iPinochleState Bid;
+	static iPinochleState Trump;
+	static iPinochleState Pass;
+	static iPinochleState Meld;
+	static iPinochleState Pause;
+	static iPinochleState Gameover;
+	static iPinochleState Round;
 	
 	//** Observers
 	List<GameStateObserver> pinochleGameObservers;
 	PinochleMessage pinochleMessage;
 	
 	//** Current iPinochleState
-	iPinochleState currentState = Start;
+	iPinochleState currentState = Pause;
 	
-	//** Default Constructor
+	//** JSON Mapper
+	ObjectMapper mapper;
+	
 	public Pinochle() {
 		players = new ArrayList<Player>(4);
 		currentTurn = Position.North;
 		currentTrump = null;
 		currentRequest = Request.Null;
-		jConvert = new JSONConvert();
-		lastMove = new Object();
 		currentMessage = "";
+		pinochleState = PinochleState.Pause;
+		currentSocket = null;
 		
 		Start = new Start(this);
 		Deal = new Deal(this);
@@ -70,11 +75,14 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		
 		pinochleGameObservers = new ArrayList<GameStateObserver>();
 		pinochleMessage = new PinochleMessage();
+		
+		mapper = new ObjectMapper();
 	}
 	
 	// Set current state
 	public void setState(final iPinochleState state) {
 		this.currentState = state;
+		pinochleState = PinochleState.valueOf(currentState.getClass().getSimpleName());
 	}
 	
 	//** Play function will call current state Play()
@@ -97,11 +105,24 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 	
 	@Override
 	public void notifyObservers() {
-		Map<NIOSocket,JSONObject> mapPlayers = pinochleMessage.updateGetMap(this);
+		PinochleMessage pinMessage = new PinochleMessage(this);
 		
 		for(GameStateObserver observer : pinochleGameObservers)
-			observer.update(mapPlayers, getCurrentSocket());
+			for(Player p : players)
+				observer.update(p.getSocket(),pinMessage.update(p));
 	};
+	
+	@Override
+	public void notifyObservers(Request request) {
+		setCurrentSocket(getPlayer(getCurrentTurn()).getSocket());
+		setCurrentRequest(request);
+		
+		PinochleMessage pinMessage = new PinochleMessage(this);
+		
+		for (GameStateObserver observer : pinochleGameObservers) {
+			observer.update(currentSocket, pinMessage.update(getPlayer(currentSocket)));
+		}
+	}
 		
 	// Helper methods
 	private Position findNextAvailablePosition() {
@@ -179,11 +200,7 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 	}
 	
 	public NIOSocket getCurrentSocket() {
-		for (Player p : players) {
-			if(p.getPosition() == currentTurn)
-				return p.getSocket();
-		}
-		return null;
+		return currentSocket;
 	}
 	
 	public List<Player> getPlayers() {
@@ -192,6 +209,10 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 
 	public void setPlayers(List<Player> players) {
 		this.players = players;
+	}
+
+	public void setCurrentSocket(NIOSocket currentSocket) {
+		this.currentSocket = currentSocket;
 	}
 
 	public int getTeam1Score() {
@@ -234,20 +255,16 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		this.currentRequest = currentRequest;
 	}
 
-	public JSONConvert getjConvert() {
-		return jConvert;
+	public PinochleState getPinochleState() {
+		return pinochleState;
 	}
 
-	public void setjConvert(JSONConvert jConvert) {
-		this.jConvert = jConvert;
+	public void setPinochleState(PinochleState pinochleState) {
+		this.pinochleState = pinochleState;
 	}
-
-	public Object getLastMove() {
-		return lastMove;
-	}
-
-	public void setLastMove(Object lastMove) {
-		this.lastMove = lastMove;
+	
+	public ObjectMapper getMapper() {
+		return mapper;
 	}
 
 	public String getCurrentMessage() {

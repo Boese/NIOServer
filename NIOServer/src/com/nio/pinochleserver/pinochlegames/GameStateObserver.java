@@ -6,5 +6,5 @@ import naga.NIOSocket;
 
 
 public interface GameStateObserver {
-	public void update(Map<NIOSocket, JSONObject> mapPlayers, NIOSocket socket);
+	public void update(NIOSocket socket, String msg);
 }

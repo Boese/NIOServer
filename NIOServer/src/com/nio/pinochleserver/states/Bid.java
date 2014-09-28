@@ -10,6 +10,7 @@ import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.pinochlegames.Pinochle;
 import com.nio.pinochleserver.pinochlegames.iPinochleState;
+import com.nio.pinochleserver.player.PlayerResponse;
 
 public class Bid implements iPinochleState{
 	List<Position> bidders;
@@ -24,30 +25,35 @@ public class Bid implements iPinochleState{
 	}
 	@Override
 	public void Play(JSONObject response) {
-		
-		// Try to get bid from JSONObject
-		int bid = mP.getjConvert().getBidFromJSON(response);
-		
-		// If bid = -1, JSONObject is invalid. Re-prompt player
-		if(bid != -1) {
+		try {
+			// Try to get bid from JSONObject
+			PlayerResponse playerresponse = new PlayerResponse();
+			playerresponse = mP.getMapper().readValue(response.toString(), PlayerResponse.class);
+			
+			int bid = playerresponse.getBid();
 			
 			// If bid == 0, player passes. Notify and remove player from bidders. Increment turn.
 			if(bid == 0) {
 				mP.setCurrentMessage("Bid from player " + mP.getCurrentTurn() + " : pass");
+				incTurn();
 				mP.notifyObservers();
 				bidTurn.remove();
-				incTurn();
 			}
 			
 			// If bid > currentBid, set currentBid = bid. Notify players. Increment turn.
 			else if(bid > currentBid) {
 				currentBid = bid;
 				mP.setCurrentMessage("Bid from player " + mP.getCurrentTurn() + " : " + currentBid);
-				mP.notifyObservers();
 				incTurn();
+				mP.notifyObservers();
 			}
 			
-			// Check if there is one bidder left and at least one bid **Return
+			// Bid not high enough
+			else {
+				throw new Exception("Bid not high enough");
+			}
+			
+			// Check if there is one bidder left and at least one bid
 			if(bidders.size() == 1 && currentBid != 0) {
 				lastBidder = lastBidder.getNext(1);
 				mP.setCurrentTurn(bidders.get(0));
@@ -55,9 +61,8 @@ public class Bid implements iPinochleState{
 				mP.setCurrentMessage("Player " + mP.getCurrentTurn() + " won bid at " + currentBid + ", Selecting Trump...");
 				mP.notifyObservers();
 				mP.Play(null);
-				return;
 			}
-			// Check if everyone passed **Return
+			// Check if everyone passed
 			else if(bidders.size() == 0) {
 				lastBidder = lastBidder.getNext(1);
 				mP.setCurrentTurn(lastBidder);
@@ -65,13 +70,12 @@ public class Bid implements iPinochleState{
 				mP.setCurrentMessage("Everyone passed! Redeal...");
 				mP.notifyObservers();
 				mP.Play(null);
-				return;
 			}
-		}
-		
-		// Prompt player to Bid
-		mP.setCurrentRequest(Request.Bid);
-		mP.notifyObservers();
+			
+		// Invalid response from player
+		} catch (Exception e) {
+			mP.notifyObservers(Request.Bid);
+		} 
 	}
 	
 	private void incTurn() {

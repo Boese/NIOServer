@@ -1,57 +1,128 @@
 package com.nio.pinochleserver.helperfunctions;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import naga.NIOSocket;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nio.pinochleserver.enums.Card;
+import com.nio.pinochleserver.enums.PinochleState;
+import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.pinochlegames.Pinochle;
+import com.nio.pinochleserver.pinochlegames.iPinochleState;
 import com.nio.pinochleserver.player.Player;
 
 public class PinochleMessage {
+	int team1Score;
+	int team2Score;
+	Position currentTurn;
+	Request currentRequest;
+	PinochleState currentState;
+	String currentMessage;
+	List<Card> cards;
+	Position myPosition;
+	Boolean myTurn;
 	
 	public PinochleMessage() {}
-
-	public Map<NIOSocket, JSONObject> updateGetMap(Pinochle pinochle) {
-		Map<NIOSocket, JSONObject> playerMSG = new HashMap<NIOSocket, JSONObject>();
+	
+	public PinochleMessage(Pinochle pin) {
+		team1Score = pin.getTeam1Score();
+		team2Score = pin.getTeam2Score();
+		currentTurn = pin.getCurrentTurn();
+		currentRequest = pin.getCurrentRequest();
+		currentState = pin.getPinochleState();
+		currentMessage = pin.getCurrentMessage();
+	}
+	
+	public String update(Player pl) {
+		cards = pl.getCurrentCards();
+		myPosition = pl.getPosition();
+		if(myPosition == currentTurn)
+			myTurn = true;
+		else
+			myTurn = false;
 		
-		//** METADATA FOR EVERYONE
+		ObjectMapper mapper = new ObjectMapper();
+		String result = "";
+		
 		try {
-			
-			//** PLAYER RELEVANT INFO , "Cards", "MyPosition", "MyTurn"
-			for (Player player : pinochle.getPlayers()) {
-				JSONObject pinochleMessage = new JSONObject();
-				pinochleMessage
-				.put("team1Score", pinochle.getTeam1Score())
-				.put("team2Score", pinochle.getTeam2Score())
-				.put("currentTurn", pinochle.getCurrentTurn())
-				.put("currentRequest", pinochle.getCurrentRequest())
-				.put("lastMove", pinochle.getLastMove())
-				.put("currentState", pinochle.getCurrentState())
-				.put("currentMessage", pinochle.getCurrentMessage());
-				pinochleMessage.put("Cards", pinochle.getjConvert().convertCardsToJSON(player.getCurrentCards()));
-				pinochleMessage.put("MyPosition", player.getPosition());
-				
-				if(pinochle.getCurrentTurn() == player.getPosition())
-					pinochleMessage.put("MyTurn", true);
-				else
-					pinochleMessage.put("MyTurn", false);
-				
-				//** SAVE TO MAP	
-				playerMSG.put(player.getSocket(), pinochleMessage);
-			}
-		} catch (JSONException e) {
-			playerMSG = null;
+			result = mapper.writeValueAsString(this);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		//** RETURN MAP
-		return playerMSG;
+		return result;
+	}
+
+	public int getTeam1Score() {
+		return team1Score;
+	}
+
+	public void setTeam1Score(int team1Score) {
+		this.team1Score = team1Score;
+	}
+
+	public int getTeam2Score() {
+		return team2Score;
+	}
+
+	public void setTeam2Score(int team2Score) {
+		this.team2Score = team2Score;
+	}
+
+	public Position getCurrentTurn() {
+		return currentTurn;
+	}
+
+	public void setCurrentTurn(Position currentTurn) {
+		this.currentTurn = currentTurn;
+	}
+
+	public Request getCurrentRequest() {
+		return currentRequest;
+	}
+
+	public void setCurrentRequest(Request currentRequest) {
+		this.currentRequest = currentRequest;
+	}
+	public String getCurrentMessage() {
+		return currentMessage;
+	}
+
+	public void setCurrentMessage(String currentMessage) {
+		this.currentMessage = currentMessage;
+	}
+
+	public List<Card> getCards() {
+		return cards;
+	}
+
+	public void setCards(List<Card> cards) {
+		this.cards = cards;
+	}
+
+	public Position getMyPosition() {
+		return myPosition;
+	}
+
+	public void setMyPosition(Position myPosition) {
+		this.myPosition = myPosition;
+	}
+
+	public Boolean getMyTurn() {
+		return myTurn;
+	}
+
+	public void setMyTurn(Boolean myTurn) {
+		this.myTurn = myTurn;
+	}
+
+	public PinochleState getCurrentState() {
+		return currentState;
+	}
+
+	public void setCurrentState(PinochleState currentState) {
+		this.currentState = currentState;
 	}
 }

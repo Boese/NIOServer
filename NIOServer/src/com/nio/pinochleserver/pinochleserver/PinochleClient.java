@@ -7,10 +7,12 @@ import java.util.List;
 
 import org.json.JSONObject;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.JSONConvert;
+import com.nio.pinochleserver.player.PlayerResponse;
 
 import naga.NIOService;
 import naga.NIOSocket;
@@ -25,6 +27,8 @@ public class PinochleClient {
 	private static List<Card> cards = new ArrayList<Card>();
 	private static JSONConvert jConvert = new JSONConvert();
 	private static NIOSocket socket = null;
+	private static ObjectMapper mapper = new ObjectMapper();
+	private static PlayerResponse response;
 	
 	private static void requestNeeded() {
 		//Start new thread to capture input. Write to NIOSocket
@@ -34,19 +38,16 @@ public class PinochleClient {
 			@Override
 			public void run() {
 		                try{
-		                	JSONObject object = new JSONObject();
+		                	response = new PlayerResponse();
+		                	int x;
 		                		switch(request) {
 		                		case Card:
-		                			int x = Integer.parseInt(s.readLine());
-		                			x++;
-		                			Card card = cards.get(x);
-		                			object = jConvert.convertCardToJSON(card);
-		                			socket.write(object.toString().getBytes());
+		                			x = Integer.parseInt(s.readLine());
+		                			response.setCard(cards.get(x));
 		                			break;
 								case Bid:
-									int bid = Integer.parseInt(s.readLine());
-									object = jConvert.convertBidToJSON(bid);
-									socket.write(object.toString().getBytes());
+									x = Integer.parseInt(s.readLine());
+									response.setBid(x);
 									break;
 								case Cards: 
 									List<Card> tempCards = new ArrayList<Card>();
@@ -59,19 +60,18 @@ public class PinochleClient {
 									tempCards.add(cards.get(b));
 									tempCards.add(cards.get(c));
 									tempCards.add(cards.get(d));
-									object = jConvert.convertCardsToJSON(tempCards);
-									socket.write(object.toString().getBytes());
+									response.setCards(tempCards);
 									break;
 								case Null:
 									break;
 								case Trump: 
 									Suit trump = Suit.Clubs.getNext(Integer.parseInt(s.readLine()));
-									object = jConvert.convertTrumpToJSON(trump);
-									socket.write(object.toString().getBytes());
+									response.setTrump(trump);
 									break;
 								default:
 									break;
 		                	}
+		                		socket.write(mapper.writeValueAsBytes(response));
 		                }
 		                catch(Exception e) {
 		                	e.printStackTrace();
@@ -116,13 +116,13 @@ public class PinochleClient {
                                 String message = new String(packet).trim();
 	                                try {
 	                                	JSONObject j = new JSONObject(message);
-	                                	System.out.println(j.toString(1));
+	                                	//System.out.println(j.toString(1));
 	                                	request = Request.valueOf(j.optString("currentRequest"));
-	                                	if(!cards.containsAll(jConvert.getCardsFromJSON(j.optJSONObject("Cards")))) {
-	                                		cards = jConvert.getCardsFromJSON(j.optJSONObject("Cards"));
+	                                	if(!cards.containsAll(jConvert.getCardsFromJSON(j.optJSONObject("cards")))) {
+	                                		cards = jConvert.getCardsFromJSON(j.optJSONObject("cards"));
 	                                		System.out.println(cards);
 	                                	}
-	                                	if(j.optBoolean("MyTurn") == true) {
+	                                	if(j.optBoolean("myTurn") == true) {
 			                                	switch(request) {
 						                		case Card: System.out.println("Enter Card (1-4):");
 						                		requestNeeded();

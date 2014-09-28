@@ -158,6 +158,7 @@ public class PinochleServer implements ServerSocketObserver{
 		@Override
 		public void packetReceived(NIOSocket socket, byte[] packet) {
 			if(pinochleGame.getCurrentSocket() == socket) {
+				pinochleGame.setCurrentSocket(null);
 				if (disconnectEvent != null) disconnectEvent.cancel(); 
 				String temp = new String(packet).trim();
 				try {
@@ -211,12 +212,10 @@ public class PinochleServer implements ServerSocketObserver{
 		 }
 
 		@Override
-		public void update(Map<NIOSocket, JSONObject> mapPlayers, NIOSocket socket) {
-			for(Map.Entry<NIOSocket, JSONObject> mapEntry : mapPlayers.entrySet()) {
-				NIOSocket s = mapEntry.getKey();
-				String msg = mapEntry.getValue().toString();
-				s.write(msg.getBytes());
-			}
+		public void update(NIOSocket socket, String msg) {
+			if(pinochleGame.getCurrentSocket() != null && pinochleGame.getCurrentSocket() == socket)
+				scheduleInactivityEvent(socket);
+			socket.write(msg.getBytes());
 		}
 
 	}

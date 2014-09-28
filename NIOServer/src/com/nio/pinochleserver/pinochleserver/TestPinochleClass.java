@@ -14,6 +14,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -25,31 +29,55 @@ import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.CalculateMeld;
 import com.nio.pinochleserver.helperfunctions.JSONConvert;
+import com.nio.pinochleserver.helperfunctions.PinochleMessage;
+import com.nio.pinochleserver.pinochlegames.Pinochle;
+import com.nio.pinochleserver.pinochlegames.iPinochleState;
+import com.nio.pinochleserver.states.Pause;
 
 public class TestPinochleClass {
 
 	public static void main(String[] args) throws Exception {
-//		List<Card> cards = new ArrayList<Card>();
-//		cards = asList(
-//				new Card(Suit.Hearts, Face.Queen),
-//				new Card(Suit.Hearts, Face.King),
-//				new Card(Suit.Hearts, Face.Ten),
-//				new Card(Suit.Spades, Face.Nine),
-//				new Card(Suit.Spades, Face.Queen),
-//				new Card(Suit.Diamonds, Face.Nine),
-//				new Card(Suit.Diamonds, Face.Jack),
-//				new Card(Suit.Diamonds, Face.Queen),
-//				new Card(Suit.Diamonds, Face.King),
-//				new Card(Suit.Diamonds, Face.Ten),
-//				new Card(Suit.Clubs, Face.Jack),
-//				new Card(Suit.Clubs, Face.Queen)
-//				);
-////		
-//		CalculateMeld c = new CalculateMeld(Suit.Spades, cards);
-//		int x = c.calculate();
-//		System.out.println(x);
-		Iterator<Position> bidTurn;
-		List<Position> bidders = new ArrayList<Position>();;
+		List<Card> cards = new ArrayList<Card>();
+		cards = asList(
+				new Card(Suit.Hearts, Face.Queen),
+				new Card(Suit.Hearts, Face.King),
+				new Card(Suit.Hearts, Face.Ten),
+				new Card(Suit.Spades, Face.Nine),
+				new Card(Suit.Spades, Face.Queen),
+				new Card(Suit.Diamonds, Face.Nine),
+				new Card(Suit.Diamonds, Face.Jack),
+				new Card(Suit.Diamonds, Face.Queen),
+				new Card(Suit.Diamonds, Face.King),
+				new Card(Suit.Diamonds, Face.Ten),
+				new Card(Suit.Clubs, Face.Jack),
+				new Card(Suit.Clubs, Face.Queen)
+				);
+		CalculateMeld c = new CalculateMeld(Suit.Spades, cards);
+		int x = c.calculate();
+		
+		ObjectMapper mapper = new ObjectMapper();
+		
+		Card ca = new Card(Suit.Diamonds, Face.Ace);
+		
+		class bidd {
+			int bid;
+			bidd(){}
+			public int getbid() {
+				return bid;
+			}
+			public void setbid(int bid) {
+				this.bid=bid;
+			}
+		}
+		bidd b = new bidd();
+		b.setbid(5);
+		Object json = mapper.readValue(
+			     mapper.writeValueAsString(b), Object.class);
+		
+		System.out.println(json);
+		
+		
+		/*List<Position> bidders = new ArrayList<Position>();;
 		
 		for(int i=0;i<4;i++)
 			bidders.add(Position.North.getNext(i));
@@ -69,7 +97,7 @@ public class TestPinochleClass {
 		
 		for (Map.Entry<Integer, String> test : testMap.entrySet()) {
 			System.out.println(test.getKey() + test.getValue());
-		}
+		}*/
 /*		MongoClient mongoClient = null;
 		try {
 			mongoClient = new MongoClient("localhost");
@@ -126,5 +154,6 @@ public class TestPinochleClass {
 //		Move m = new Move();
 //		m.setCards(null);
 //		System.out.println(m.getCards());
+		
 	}
 }

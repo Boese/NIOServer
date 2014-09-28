@@ -14,19 +14,15 @@ public class Trump implements iPinochleState {
 	}
 	@Override
 	public void Play(JSONObject response) {
-		Suit move = null;
-		move = mP.getjConvert().getTrumpFromJSON(response);
-		if(move == null) {
-			mP.setCurrentRequest(Request.Trump);
-			mP.notifyObservers();
-		}
-		else {
+		try {
+			Suit move = mP.getMapper().readValue(response.toString(), Suit.class);
 			mP.setCurrentTrump(move);
-			mP.setLastMove(move);
 			mP.setCurrentMessage("Trump is " + mP.getCurrentTrump());
 			mP.notifyObservers();
 			mP.setState(mP.getPassState());
 			mP.Play(null);
+		} catch (Exception e) {
+			mP.notifyObservers(Request.Trump);
 		}
 	}
 }
