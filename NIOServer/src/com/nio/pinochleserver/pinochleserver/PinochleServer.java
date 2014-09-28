@@ -3,7 +3,6 @@ package com.nio.pinochleserver.pinochleserver;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 import org.json.JSONException;
@@ -121,6 +120,7 @@ public class PinochleServer implements ServerSocketObserver{
         private DelayedEvent disconnectEvent;
         private PinochleServer server;
         private JSONObject socketResponse;
+        private NIOSocket currentSocket;
 		
 		private Game(PinochleServer server) {
 			pinochleGame = new Pinochle();
@@ -157,8 +157,8 @@ public class PinochleServer implements ServerSocketObserver{
 
 		@Override
 		public void packetReceived(NIOSocket socket, byte[] packet) {
-			if(pinochleGame.getCurrentSocket() == socket) {
-				pinochleGame.setCurrentSocket(null);
+			if(currentSocket == socket) {
+				currentSocket = null;
 				if (disconnectEvent != null) disconnectEvent.cancel(); 
 				String temp = new String(packet).trim();
 				try {
@@ -213,9 +213,21 @@ public class PinochleServer implements ServerSocketObserver{
 
 		@Override
 		public void update(NIOSocket socket, String msg) {
-			if(pinochleGame.getCurrentSocket() != null && pinochleGame.getCurrentSocket() == socket)
-				scheduleInactivityEvent(socket);
 			socket.write(msg.getBytes());
+		}
+
+		@Override
+		public void request(NIOSocket socket, String msg) {
+			currentSocket = socket;
+			socket.write(msg.getBytes());
+			scheduleInactivityEvent(socket);
+		}
+		
+		@Override
+		public void close() {
+			for (NIOSocket socket : sockets) {
+				socket.closeAfterWrite();
+			}
 		}
 
 	}

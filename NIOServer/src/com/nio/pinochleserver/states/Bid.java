@@ -35,22 +35,17 @@ public class Bid implements iPinochleState{
 			// If bid == 0, player passes. Notify and remove player from bidders. Increment turn.
 			if(bid == 0) {
 				mP.setCurrentMessage("Bid from player " + mP.getCurrentTurn() + " : pass");
-				incTurn();
 				mP.notifyObservers();
 				bidTurn.remove();
+				incTurn();
 			}
 			
 			// If bid > currentBid, set currentBid = bid. Notify players. Increment turn.
 			else if(bid > currentBid) {
 				currentBid = bid;
 				mP.setCurrentMessage("Bid from player " + mP.getCurrentTurn() + " : " + currentBid);
-				incTurn();
 				mP.notifyObservers();
-			}
-			
-			// Bid not high enough
-			else {
-				throw new Exception("Bid not high enough");
+				incTurn();
 			}
 			
 			// Check if there is one bidder left and at least one bid
@@ -72,10 +67,18 @@ public class Bid implements iPinochleState{
 				mP.Play(null);
 			}
 			
+			// Bid not high enough
+			else
+				requestBid();
+			
 		// Invalid response from player
 		} catch (Exception e) {
-			mP.notifyObservers(Request.Bid);
+			requestBid();
 		} 
+	}
+	
+	private void requestBid() {
+		mP.notifyObservers(Request.Bid);
 	}
 	
 	private void incTurn() {

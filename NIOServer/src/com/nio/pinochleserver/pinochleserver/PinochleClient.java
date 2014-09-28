@@ -65,8 +65,10 @@ public class PinochleClient {
 								case Null:
 									break;
 								case Trump: 
-									Suit trump = Suit.Clubs.getNext(Integer.parseInt(s.readLine()));
-									response.setTrump(trump);
+									x = Integer.parseInt(s.readLine());
+									x--;
+									Suit trump = Suit.Hearts;
+									response.setTrump(trump.getNext(x));
 									break;
 								default:
 									break;

@@ -6,6 +6,7 @@ import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.pinochlegames.Pinochle;
 import com.nio.pinochleserver.pinochlegames.iPinochleState;
+import com.nio.pinochleserver.player.PlayerResponse;
 
 public class Trump implements iPinochleState {
 	Pinochle mP;
@@ -15,7 +16,10 @@ public class Trump implements iPinochleState {
 	@Override
 	public void Play(JSONObject response) {
 		try {
-			Suit move = mP.getMapper().readValue(response.toString(), Suit.class);
+			PlayerResponse playerresponse = new PlayerResponse();
+			playerresponse = mP.getMapper().readValue(response.toString(), PlayerResponse.class);
+			Suit move = playerresponse.getTrump();
+			
 			mP.setCurrentTrump(move);
 			mP.setCurrentMessage("Trump is " + mP.getCurrentTrump());
 			mP.notifyObservers();

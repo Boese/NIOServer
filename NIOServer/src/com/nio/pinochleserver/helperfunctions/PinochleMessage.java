@@ -9,7 +9,6 @@ import com.nio.pinochleserver.enums.PinochleState;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.pinochlegames.Pinochle;
-import com.nio.pinochleserver.pinochlegames.iPinochleState;
 import com.nio.pinochleserver.player.Player;
 
 public class PinochleMessage {

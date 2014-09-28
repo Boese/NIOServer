@@ -2,7 +2,6 @@ package com.nio.pinochleserver.states;
 
 import org.json.JSONObject;
 
-import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.pinochlegames.Pinochle;
 import com.nio.pinochleserver.pinochlegames.iPinochleState;
 

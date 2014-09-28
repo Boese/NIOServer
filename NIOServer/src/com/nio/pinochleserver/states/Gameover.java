@@ -14,5 +14,6 @@ public class Gameover implements iPinochleState {
 	public void Play(JSONObject response) {
 		mP.setCurrentMessage("Game Over!");
 		mP.notifyObservers();
+		mP.notifyObserversGameover();
 	}
 }

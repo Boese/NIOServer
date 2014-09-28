@@ -2,8 +2,6 @@ package com.nio.pinochleserver.pinochlegames;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
 import naga.NIOSocket;
 
 import org.json.JSONObject;
@@ -14,7 +12,6 @@ import com.nio.pinochleserver.enums.PinochleState;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
-import com.nio.pinochleserver.helperfunctions.JSONConvert;
 import com.nio.pinochleserver.helperfunctions.PinochleMessage;
 import com.nio.pinochleserver.player.Player;
 import com.nio.pinochleserver.states.*;
@@ -31,7 +28,6 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 	Request currentRequest;
 	String currentMessage;
 	PinochleState pinochleState;
-	NIOSocket currentSocket;
 	
 	//** iPinochleStates
 	static iPinochleState Start;
@@ -61,7 +57,6 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		currentRequest = Request.Null;
 		currentMessage = "";
 		pinochleState = PinochleState.Pause;
-		currentSocket = null;
 		
 		Start = new Start(this);
 		Deal = new Deal(this);
@@ -114,13 +109,21 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 	
 	@Override
 	public void notifyObservers(Request request) {
-		setCurrentSocket(getPlayer(getCurrentTurn()).getSocket());
 		setCurrentRequest(request);
-		
 		PinochleMessage pinMessage = new PinochleMessage(this);
 		
+		Player p = getPlayer(currentTurn);
 		for (GameStateObserver observer : pinochleGameObservers) {
-			observer.update(currentSocket, pinMessage.update(getPlayer(currentSocket)));
+			observer.request(p.getSocket(), pinMessage.update(p));
+		}
+		
+		currentRequest = Request.Null;
+	}
+	
+	@Override
+	public void notifyObserversGameover() {
+		for(GameStateObserver observer : pinochleGameObservers) {
+			observer.close();
 		}
 	}
 		
@@ -199,20 +202,12 @@ public class Pinochle implements GameStateSubject, iPinochleState{
 		return full;
 	}
 	
-	public NIOSocket getCurrentSocket() {
-		return currentSocket;
-	}
-	
 	public List<Player> getPlayers() {
 		return this.players;
 	}
 
 	public void setPlayers(List<Player> players) {
 		this.players = players;
-	}
-
-	public void setCurrentSocket(NIOSocket currentSocket) {
-		this.currentSocket = currentSocket;
 	}
 
 	public int getTeam1Score() {
