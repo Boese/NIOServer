@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.json.JSONObject;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.Request;
@@ -118,34 +119,29 @@ public class PinochleClient {
                                 String message = new String(packet).trim();
 	                                try {
 	                                	JSONObject j = new JSONObject(message);
-	                                	//System.out.println(j.toString(1));
 	                                	request = Request.valueOf(j.optString("currentRequest"));
-	                                	if(!cards.containsAll(jConvert.getCardsFromJSON(j.optJSONObject("cards")))) {
-	                                		cards = jConvert.getCardsFromJSON(j.optJSONObject("cards"));
-	                                		System.out.println(cards);
+	                                	if(!cards.containsAll(mapper.readValue(j.optString("cards"), new TypeReference<List<Card>>() { }))) {
+	                                		cards = mapper.readValue(j.optString("cards"), new TypeReference<List<Card>>() { });
+	                                		System.out.println("Cards : " + cards);
 	                                	}
-	                                	if(j.optBoolean("myTurn") == true) {
-			                                	switch(request) {
-						                		case Card: System.out.println("Enter Card (1-4):");
-						                		requestNeeded();
-						                			break;
-												case Bid: System.out.println("Enter Bid :");
-												requestNeeded();
-													break;
-												case Cards: System.out.println("Enter Cards (1-12),(1-12),(1-12),(1-12):");
-												requestNeeded();
-													break;
-												case Null: System.out.println(j.optString("currentMessage"));
-													break;
-												case Trump: System.out.println("Enter Trump (1-4):");
-												requestNeeded();
-													break;
-												default:
-													break;
-						                	}
+	                                	switch(request) {
+				                		case Card: System.out.println("Enter Card (1-4):");
+				                		requestNeeded();
+				                			break;
+										case Bid: System.out.println("Enter Bid :");
+										requestNeeded();
+											break;
+										case Cards: System.out.println("Enter Cards (1-12),(1-12),(1-12),(1-12):");
+										requestNeeded();
+											break;
+										case Null: System.out.println(j.optString("currentMessage"));
+											break;
+										case Trump: System.out.println("Enter Trump (1-4):");
+										requestNeeded();
+											break;
+										default:
+											break;
 	                                	}
-	                                	else
-	                                		System.out.println(j.optString("currentMessage"));
 	                                }
 	                                catch(Exception e) {
 	                                	System.out.println(message);

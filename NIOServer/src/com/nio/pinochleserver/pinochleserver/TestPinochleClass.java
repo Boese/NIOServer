@@ -16,6 +16,7 @@ import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.mongodb.BasicDBObject;
@@ -57,26 +58,13 @@ public class TestPinochleClass {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		
-		Card ca = new Card(Suit.Diamonds, Face.Ace);
+		String ca = mapper.writeValueAsString(cards);
 		
-		class bidd {
-			int bid;
-			bidd(){}
-			public int getbid() {
-				return bid;
-			}
-			public void setbid(int bid) {
-				this.bid=bid;
-			}
-		}
-		bidd b = new bidd();
-		b.setbid(5);
-		Object json = mapper.readValue(
-			     mapper.writeValueAsString(b), Object.class);
+		System.out.println(ca);
 		
-		System.out.println(json);
+		List<Card> car = mapper.readValue(ca, new TypeReference<List<Card>>() { });
 		
-		
+		System.out.println(car);
 		/*List<Position> bidders = new ArrayList<Position>();;
 		
 		for(int i=0;i<4;i++)

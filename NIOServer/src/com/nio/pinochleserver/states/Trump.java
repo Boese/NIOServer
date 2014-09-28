@@ -21,7 +21,7 @@ public class Trump implements iPinochleState {
 			Suit move = playerresponse.getTrump();
 			
 			mP.setCurrentTrump(move);
-			mP.setCurrentMessage("Trump is " + mP.getCurrentTrump());
+			mP.setCurrentMessage(mP.getCurrentTurn() + " selected " + mP.getCurrentTrump() + " as trump!");
 			mP.notifyObservers();
 			mP.setState(mP.getPassState());
 			mP.Play(null);
