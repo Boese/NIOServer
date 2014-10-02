@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nio.pinochleserver.enums.Card;
 import com.nio.pinochleserver.enums.Request;
 import com.nio.pinochleserver.enums.Suit;
-import com.nio.pinochleserver.helperfunctions.JSONConvert;
 import com.nio.pinochleserver.player.PlayerResponse;
 
 import naga.NIOService;
@@ -26,7 +25,6 @@ public class PinochleClient {
 	
 	private static Request request = Request.Null;
 	private static List<Card> cards = new ArrayList<Card>();
-	private static JSONConvert jConvert = new JSONConvert();
 	private static NIOSocket socket = null;
 	private static ObjectMapper mapper = new ObjectMapper();
 	private static PlayerResponse response;

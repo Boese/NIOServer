@@ -29,7 +29,6 @@ import com.nio.pinochleserver.enums.Face;
 import com.nio.pinochleserver.enums.Position;
 import com.nio.pinochleserver.enums.Suit;
 import com.nio.pinochleserver.helperfunctions.CalculateMeld;
-import com.nio.pinochleserver.helperfunctions.JSONConvert;
 import com.nio.pinochleserver.helperfunctions.PinochleMessage;
 import com.nio.pinochleserver.pinochlegames.Pinochle;
 import com.nio.pinochleserver.pinochlegames.iPinochleState;
