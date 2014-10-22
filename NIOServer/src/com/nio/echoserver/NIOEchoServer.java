@@ -9,7 +9,7 @@ public class NIOEchoServer
   public static void main(String... args)
   {
     //int port = Integer.parseInt(args[0]);
-	  int port = 5217;
+	  int port = 5218;
     try
     {
       // Create the NIO service.
@@ -30,6 +30,8 @@ public class NIOEchoServer
             public void packetReceived(NIOSocket socket, byte[] packet)
             {
               // Write the bytes back to the client.
+        		  String temp = new String(packet);
+        		  System.out.println(temp);
               socket.write(packet);
             }
           });
