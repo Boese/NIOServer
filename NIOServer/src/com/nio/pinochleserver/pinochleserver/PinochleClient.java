@@ -90,7 +90,7 @@ public class PinochleClient {
                 NIOService service = new NIOService();
 
                 // Open our socket.
-                socket = service.openSocket("76.14.226.220", 5217);
+                socket = service.openSocket("localhost", 5217);
 
                 // Use regular 1 byte header reader/writer
                 socket.setPacketReader(new AsciiLinePacketReader());
