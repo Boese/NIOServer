@@ -27,8 +27,9 @@ public class Client {
 	static String logFile1 = "Lab2.Scenario1.BoeseC.txt";
 	static String logFile2 = "Lab2.Scenario2.BoeseC.txt";
 	static String logFile3 = "Lab2.Scenario3.BoeseC.txt";
+	static String logFileTest = "test.txt";
 	
-	static int RequestType = 3;
+	static int RequestType = 2;
 	static int ResponseDelay = 0;
 	static int MessageCount = 0;
 	static long initialTime = 0;
@@ -79,12 +80,12 @@ public class Client {
 		socket.setPacketReader(new RegularPacketReader(2, true));
 		ParseMessage parseMessage = new ParseMessage();
 		
-		RandomAccessFile file = new RandomAccessFile(logFile3, "rw");
+		RandomAccessFile file = new RandomAccessFile(logFileTest, "rw");
 		file.setLength(0);
 		file.close();
 		
 		log = new ArrayList<String>();
-		writer = new BufferedWriter(new FileWriter(logFile3, true));
+		writer = new BufferedWriter(new FileWriter(logFileTest, true));
 		
 		sentMessages = new ArrayList<String>();
 		
@@ -115,7 +116,7 @@ public class Client {
 			public void connectionOpened(NIOSocket socket) {
 				System.out.println("connected");
 				initialTime = System.currentTimeMillis();
-				new Timer().schedule(new WaitEvent(), (20 * 1000));
+				new Timer().schedule(new WaitEvent(), (20 * 10000));
 				
 				for(int i = 0; i < 100; i++)
 					new Timer().schedule(new EventLoop(), 50*(i+1));
@@ -157,12 +158,12 @@ public class Client {
 	
 	public static byte[] getMessage(int num)
 	{
-		if((num % 10) == 0)
-			ResponseDelay = 4000;
-		else
-			ResponseDelay = 0;
+		//if((num % 10) == 0)
+		//	ResponseDelay = 4000;
+		//else
+			ResponseDelay += 10;
 		String data = "REQ|" + ((Long)System.currentTimeMillis()).intValue() 
-				+ "|" + Integer.toString(MessageCount) + "|BoeseC|21-0068|" + ResponseDelay + "|10.1.20.5|"
+				+ "|" + Integer.toString(MessageCount) + "|BoeseC|21-0068|" + ResponseDelay + "|10.1.20.13|"
 				+ socket.socket().getLocalPort() + "|577|" + foreignHostIp + "|2605|F|" + RequestType + "|";
 		
 		byte[] message = ByteBuffer.allocate(data.length() + 2)
